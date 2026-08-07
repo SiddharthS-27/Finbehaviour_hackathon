@@ -1,26 +1,179 @@
 @import "tailwindcss";
 
+/* The app is dark-only — a bank passbook that's alive, not a neobank dashboard.
+   `.dark` is hard-set on <html> so shadcn's dark: variants resolve. */
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPOUND palette — the raw tokens.
+
+   THE COLOUR RULE, ABSOLUTE:
+     marigold is YOU.  mint is the OPTIMAL path.  rust is DEBT.
+     violet is the COACH'S VOICE and is never used for data.
+   These four never mean anything else anywhere in the app.
+   Colour carries data, not decoration.
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #0f1d1b; /* page background — deep teal-black */
+  --surface: #162926; /* raised panels */
+  --surface2: #1e3833; /* hover, inset rows */
+  --line: #2c4a44; /* hairlines, always 1px */
+  --chalk: #e8e2d4; /* primary text, warm off-white */
+  --muted: #8aa39d; /* secondary text */
+  --marigold: #e9a63c; /* YOU */
+  --mint: #6fc79a; /* OPTIMAL */
+  --rust: #c4573a; /* DEBT */
+  --violet: #8b7cc8; /* the AI coach */
+
+  /* ── shadcn semantic layer, mapped onto the palette above ──
+     Some shadcn components reference these as raw var() in arbitrary values,
+     so they must exist as real custom properties, not just theme keys. */
+  --background: var(--ink);
+  --foreground: var(--chalk);
+  --card: var(--surface);
+  --card-foreground: var(--chalk);
+  --popover: var(--surface);
+  --popover-foreground: var(--chalk);
+  --primary: var(--marigold);
+  --primary-foreground: var(--ink);
+  --secondary: var(--surface2);
+  --secondary-foreground: var(--chalk);
+  --accent: var(--surface2);
+  --accent-foreground: var(--chalk);
+  --destructive: var(--rust);
+  --destructive-foreground: var(--chalk);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--marigold);
+
+  /* NOTE: shadcn's `--muted` would collide with our secondary-text `--muted`.
+     No component reads var(--muted) directly (verified), so we resolve the
+     clash in @theme inline instead: bg-muted → surface2, text-muted-foreground
+     → our muted. Do not add a raw --muted override here. */
+
+  --radius: 4px;
+}
+
+/* Non-inline @theme so these are emitted as real CSS vars — shadcn components
+   use them inside arbitrary values like rounded-[min(var(--radius-md),10px)].
+   Everything is capped at 4px: flat panels, hairlines, no soft edges.
+   rounded-full is left at its Tailwind default — the ribbon pips need it. */
+@theme {
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
 }
 
 @theme inline {
+  /* shadcn semantic colours */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* the collision resolution */
+  --color-muted: var(--surface2);
+  --color-muted-foreground: var(--muted);
+
+  /* COMPOUND colours, addressable directly: bg-ink, text-marigold, border-line */
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-line: var(--line);
+  --color-chalk: var(--chalk);
+  --color-marigold: var(--marigold);
+  --color-mint: var(--mint);
+  --color-rust: var(--rust);
+  --color-violet: var(--violet);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-instrument-sans);
+  --font-mono: var(--font-plex-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--ink);
+    /* iOS rubber-band scroll reveals this behind the app shell */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--ink);
+    color: var(--chalk);
+    font-family: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+    /* Mobile-first PWA: never scroll sideways, at any width. */
+    overflow-x: hidden;
+  }
+
+  /* Display face — headings, month numbers, the archetype name.
+     Fraunces at large sizes only, tight tracking, soft + wonky. */
+  .font-display {
+    font-variation-settings: "SOFT" 40, "WONK" 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Every rupee amount, without exception. Tabular figures so digits do not
+     jitter horizontally while a number rolls up. */
+  .font-mono,
+  [data-money] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Focus is always visible and always marigold — it is a "you" affordance. */
+  :focus-visible {
+    outline: 2px solid var(--marigold);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Clears the iOS home indicator — the advance button sits on this. */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pt-safe {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  /* ≥44px touch targets, per the mobile gate. */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Motion is exactly four moments (roll-up, card deal, badge pop, near-death
+   transition). Everyone who asks for less gets opacity fades and no confetti.
+   The functional slider lock at stress > 70 is NOT motion and stays. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
