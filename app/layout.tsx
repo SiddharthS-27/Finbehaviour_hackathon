@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Instrument_Sans, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { StaleSaveNotice } from "@/components/StaleSaveNotice";
 import "./globals.css";
 
 /* Display — headings, month numbers, the archetype name. Large sizes only.
@@ -71,6 +72,7 @@ export default function RootLayout({
       <body className="min-h-dvh bg-ink text-chalk antialiased">
         {children}
         <Toaster theme="dark" position="top-center" />
+        <StaleSaveNotice />
         <ServiceWorkerRegistrar />
       </body>
     </html>
