@@ -26,7 +26,10 @@
       "Bash(echo \"tsc exit: $?\")",
       "Bash(node -e \"const t=require\\('./tsconfig.json'\\); console.log\\('strict:', t.compilerOptions.strict, '| paths:', JSON.stringify\\(t.compilerOptions.paths\\)\\)\")",
       "Bash(git add *)",
-      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m ' *)"
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m ' *)",
+      "Bash(SMOKE_LOG=1 npx vitest run lib/sim/__tests__/smoke.test.ts)",
+      "Bash(SMOKE_LOG=1 npx vitest run lib/sim/__tests__/smoke.test.ts --disable-console-intercept)",
+      "Bash(echo \"exit=$?\")"
     ],
     "additionalDirectories": [
       "/home/siddharth/Desktop/fin/app/play"
