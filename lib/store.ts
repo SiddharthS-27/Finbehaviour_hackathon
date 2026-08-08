@@ -13,6 +13,7 @@ import type {
 import { scoreDiagnostic, type DiagnosticResult } from "@/content/diagnostic";
 import { advanceMonth, createInitialState } from "@/lib/sim/engine";
 import { eventForMonth, marketForRun } from "@/lib/sim/deck";
+import { runOptimal, type OptimalRun } from "@/lib/sim/agent";
 import { scalePack } from "@/lib/profile";
 import { packForMode, packById } from "@/content/packs";
 
@@ -129,6 +130,43 @@ export function packForRun(run: RunState): ContentPack {
 
 export function marketFor(run: RunState): number[] {
   return marketForRun(packForRun(run), run.seed);
+}
+
+/**
+ * ★ The shadow agent's run — recomputed, never persisted.
+ *
+ * A stale save that disagreed with the current engine would quietly poison
+ * every number in the report, so this is derived from `packId` + `incomeTier` +
+ * `seed` exactly like the deck and the market are. (Edge case 17.)
+ *
+ * Memoised on those three keys because the play screen asks for it on every
+ * render and twelve engine steps, while cheap, are not free. The cache is a
+ * plain module-level Map: it lives as long as the tab does, which is precisely
+ * the lifetime of the thing it describes.
+ */
+const optimalCache = new Map<string, OptimalRun>();
+const OPTIMAL_CACHE_LIMIT = 8;
+
+export function optimalForRun(run: RunState): OptimalRun {
+  const key = `${run.packId}:${run.incomeTier}:${run.seed}`;
+  const hit = optimalCache.get(key);
+  if (hit) return hit;
+
+  const pack = packForRun(run);
+  const label = `optimal-run ${key}`;
+  const timed = process.env.NODE_ENV !== "production";
+
+  // Phase 7's gate asks for this on the console. It is also the honest place
+  // to notice if the benchmark ever stops being cheap enough to run on mount.
+  if (timed) console.time(label);
+  const result = runOptimal(pack, run.seed, marketForRun(pack, run.seed));
+  if (timed) console.timeEnd(label);
+
+  if (optimalCache.size >= OPTIMAL_CACHE_LIMIT) {
+    optimalCache.delete(optimalCache.keys().next().value as string);
+  }
+  optimalCache.set(key, result);
+  return result;
 }
 
 export const useCompoundStore = create<CompoundState>()(

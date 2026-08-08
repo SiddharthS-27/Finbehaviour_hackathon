@@ -145,6 +145,10 @@ export function EventCardView({
                   type="button"
                   disabled={isDisabled}
                   aria-pressed={selected}
+                  // A stable handle for the end-to-end gate. Deliberately the
+                  // option's own id and nothing more — marking which one is
+                  // correct here would put the answer key in the DOM.
+                  data-choice-id={choice.id}
                   onClick={() => handleSelect(choice)}
                   className={cn(
                     "flex min-h-[56px] w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-colors",

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   isRunComplete,
   marketFor,
+  optimalForRun,
   packForRun,
   useCompoundStore,
   useHasHydrated,
@@ -25,6 +26,7 @@ import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
 import { CRITICAL, criticalState, lockedSlider } from "@/lib/sim/bandwidth";
 import { CriticalLayer } from "./CriticalLayer";
 import { DevPanel } from "./DevPanel";
+import { NetWorthChart } from "./NetWorthChart";
 
 /**
  * ★ ONE game screen, all three modes.
@@ -97,12 +99,15 @@ export function PlayScreen({ mode }: { mode: string }) {
     const market = marketFor(run);
     const event = complete ? null : eventForMonth(pack, run.state.month, run.state);
     const openingNetWorth = netWorth(createInitialState(pack, run.seed));
-    return { pack, market, event, openingNetWorth };
+    // ★ Recomputed from the seed, memoised in the store, never persisted.
+    //   The agent plays this exact pack against this exact market.
+    const optimal = optimalForRun(run);
+    return { pack, market, event, openingNetWorth, optimal };
   }, [run, complete]);
 
   if (!hydrated || !run || !derived) return <Skeleton />;
 
-  const { pack, event, openingNetWorth } = derived;
+  const { pack, event, openingNetWorth, optimal } = derived;
   const state = run.state;
   const history = state.history;
   const lastRec = history[history.length - 1] ?? null;
@@ -172,6 +177,7 @@ export function PlayScreen({ mode }: { mode: string }) {
       // turn the checks into no-ops.
       data-phase={run.phase}
       data-month={state.month}
+      data-seed={run.seed}
       data-unallocated={unallocated}
       data-available={available}
       data-reduced-motion={reducedMotion ? "1" : "0"}
@@ -202,6 +208,15 @@ export function PlayScreen({ mode }: { mode: string }) {
         totalMonths={state.totalMonths}
         currentMonth={run.phase === "resolved" ? state.month - 1 : state.month}
         records={history}
+        below={
+          <NetWorthChart
+            totalMonths={state.totalMonths}
+            openingNetWorth={openingNetWorth}
+            records={history}
+            optimal={optimal}
+            reducedMotion={reducedMotion}
+          />
+        }
       />
 
       <div className="flex flex-col gap-4 pt-4 pb-40">

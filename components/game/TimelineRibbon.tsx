@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { MonthRecord } from "@/lib/sim/types";
+import { RIBBON_GAP_PX } from "@/lib/ribbon-geometry";
 
 /**
  * ★ The signature element.
@@ -27,6 +28,12 @@ export interface RibbonProps {
   /** Phase 8 makes cells tappable for the what-if replay. */
   onSelect?: (month: number) => void;
   selectedMonth?: number | null;
+  /**
+   * Slotted directly under the cell row, above the legend — this is where the
+   * net-worth chart goes, so it hangs off the ribbon's x-axis with nothing
+   * between them.
+   */
+  below?: React.ReactNode;
 }
 
 export function TimelineRibbon({
@@ -35,12 +42,21 @@ export function TimelineRibbon({
   records,
   onSelect,
   selectedMonth,
+  below,
 }: RibbonProps) {
   const months = Array.from({ length: totalMonths }, (_, i) => i + 1);
 
   return (
     <div className="flex w-full flex-col gap-1.5">
-      <div className="flex w-full gap-[3px]" role="list" aria-label="Timeline">
+      {/* The gap comes from the shared geometry module, not a Tailwind literal:
+          the net-worth chart below computes its x-positions from the same
+          number, and a drift of 3px would visibly de-align the two. */}
+      <div
+        className="flex w-full"
+        style={{ gap: RIBBON_GAP_PX }}
+        role="list"
+        aria-label="Timeline"
+      >
         {months.map((m) => {
           const record = records[m - 1];
           const isPast = m < currentMonth;
@@ -109,6 +125,8 @@ export function TimelineRibbon({
           );
         })}
       </div>
+
+      {below}
 
       <div className="flex items-center justify-between px-0.5">
         <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
