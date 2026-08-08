@@ -1,13 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isRunComplete, useLedgerStore } from "@/lib/store";
 import { useGuard } from "@/lib/hooks/useGuard";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
 import { lifeStageLabel, previewIncome } from "@/lib/profile";
 import { packForMode, storyFirstEarner } from "@/content/packs";
 import { formatRupees } from "@/lib/format";
+import { currentStreak, dailyDeck, deckStartFor, isDayComplete, todayKey } from "@/lib/bites";
+import { BitesWidget } from "@/components/bites/BitesWidget";
+import { BitesFlow } from "@/components/bites/BitesFlow";
 import { AppHeader } from "./AppHeader";
 
 /**
@@ -84,10 +89,26 @@ function Skeleton() {
 export function HomeScreen() {
   const router = useRouter();
   const { ready } = useGuard({ requireAuth: true, requireOnboarded: true });
+  const reducedMotion = usePrefersReducedMotion();
 
   const profile = useLedgerStore((s) => s.profile);
   const run = useLedgerStore((s) => s.run);
   const startRun = useLedgerStore((s) => s.startRun);
+
+  const bites = useLedgerStore((s) => s.bites);
+  const recordBiteProgress = useLedgerStore((s) => s.recordBiteProgress);
+  const completeDailyBites = useLedgerStore((s) => s.completeDailyBites);
+
+  /* ★ The clock is read in an effect, never during render.
+     `todayKey()` on the server and `todayKey()` in the browser can disagree
+     across a timezone or a midnight, and a hydration mismatch on the dashboard
+     is the one place it would be most visible. Null until mounted. */
+  const [today, setToday] = useState<string | null>(null);
+  const [bitesOpen, setBitesOpen] = useState(false);
+  /** Review restarts the deck from the top instead of resuming. */
+  const [bitesStart, setBitesStart] = useState(0);
+
+  useEffect(() => setToday(todayKey()), []);
 
   if (!ready) return <Skeleton />;
 
@@ -96,6 +117,12 @@ export function HomeScreen() {
   const finished = run && isRunComplete(run) ? run : null;
 
   const available = CARDS.filter((c) => c.mode === null || Boolean(packForMode(c.mode)));
+
+  /* Quick bites. Everything here is derived, and all of it waits on `today`. */
+  const bitesComplete = today ? isDayComplete(bites.lastCompletedDay, today) : false;
+  const bitesSeen = today && bites.day === today ? bites.seen : 0;
+  const streak = today ? currentStreak(bites, today) : 0;
+  const deck = today ? dailyDeck(deckStartFor(bites, today)) : [];
 
   return (
     <main
@@ -177,6 +204,25 @@ export function HomeScreen() {
         </Link>
       ) : null}
 
+      {/* ★ The daily habit. Rendered only once the clock has been read on the
+          client, so the widget never paints yesterday's state for a frame. */}
+      {today ? (
+        <BitesWidget
+          seen={bitesSeen}
+          streak={streak}
+          complete={bitesComplete}
+          xp={bites.xp}
+          onStart={() => {
+            setBitesStart(bitesSeen);
+            setBitesOpen(true);
+          }}
+          onReview={() => {
+            setBitesStart(0);
+            setBitesOpen(true);
+          }}
+        />
+      ) : null}
+
       <section className="flex flex-col gap-3">
         {available.map((card) => {
           const isLive = live?.mode === card.mode;
@@ -208,6 +254,18 @@ export function HomeScreen() {
       </section>
 
       <div className="py-8" />
+
+      {bitesOpen && today ? (
+        <BitesFlow
+          deck={deck}
+          startIndex={bitesStart}
+          streak={streak}
+          reducedMotion={reducedMotion}
+          onProgress={(seen) => recordBiteProgress(today, seen)}
+          onComplete={() => completeDailyBites(today)}
+          onClose={() => setBitesOpen(false)}
+        />
+      ) : null}
     </main>
   );
 }

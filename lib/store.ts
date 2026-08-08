@@ -24,6 +24,7 @@ import { eventForMonth, marketForRun } from "@/lib/sim/deck";
 import { runOptimal, type OptimalRun } from "@/lib/sim/agent";
 import { scalePack } from "@/lib/profile";
 import { packForMode, packById } from "@/content/packs";
+import { BITE_XP_REWARD, DAILY_BITE_COUNT, nextStreak } from "@/lib/bites";
 
 /**
  * The only stateful thing in the project.
@@ -37,6 +38,11 @@ import { packForMode, packById } from "@/content/packs";
  *
  * v2 — added the run slice.
  * v3 — added the account slice, and renamed the storage key with the product.
+ *
+ * The Quick Bites slice was added at v3 *without* a bump, deliberately. It is
+ * purely additive: zustand's merge is shallow, so a v3 save written before it
+ * existed simply has no `bites` key and falls back to the default. Bumping
+ * would have wiped every account on the device to add a streak counter.
  */
 export const SCHEMA_VERSION = 3;
 export const STORAGE_KEY = "lifeledger";
@@ -83,6 +89,41 @@ export interface RunState {
 
 export type AuthResult = { ok: true } | { ok: false; error: string };
 
+/**
+ * Quick Bites — the daily learning habit, persisted.
+ *
+ * `cursor` is the only piece that has to survive: it is how far through the
+ * ordered deck this person has read, and it is what makes tomorrow's five
+ * different from today's. Everything else is the streak, which is a promise
+ * the app made and therefore has to keep across a reload.
+ *
+ * Deliberately *not* folded into `run.state.xp`. Bite XP is knowledge, not a
+ * simulated decision, and mixing it into engine state would mean a player's
+ * net worth stopped being derivable from their choices. It is banked here and
+ * shown as its own number.
+ */
+export interface BitesSlice {
+  /** How many cards have been consumed in total. Drives the daily deck. */
+  cursor: number;
+  /** The day `seen` refers to. A new day resets progress to zero. */
+  day: string | null;
+  /** How many of today's five have been swiped through. */
+  seen: number;
+  streak: number;
+  lastCompletedDay: string | null;
+  /** Total XP banked from bites, across every day. */
+  xp: number;
+}
+
+export const EMPTY_BITES: BitesSlice = {
+  cursor: 0,
+  day: null,
+  seen: 0,
+  streak: 0,
+  lastCompletedDay: null,
+  xp: 0,
+};
+
 interface LedgerState {
   /**
    * One account per device.
@@ -99,6 +140,7 @@ interface LedgerState {
   diagnosticAnswers: Record<string, string>;
   onboardingComplete: boolean;
   run: RunState | null;
+  bites: BitesSlice;
 
   /** Transient — never persisted. */
   staleSaveCleared: boolean;
@@ -124,6 +166,14 @@ interface LedgerState {
   abandonRun: () => void;
   /** Development only — the Phase 6 gate needs to force critical states. */
   devForce: (patch: Partial<SimState>) => void;
+
+  /** Records how far into today's five they have got. Never goes backwards. */
+  recordBiteProgress: (day: string, seen: number) => void;
+  /**
+   * Bank the day. Returns true only when XP was newly awarded, so the
+   * completion screen can say "+50" once and "already banked" on a review.
+   */
+  completeDailyBites: (day: string) => boolean;
 }
 
 const INITIAL = {
@@ -133,6 +183,7 @@ const INITIAL = {
   diagnosticAnswers: {} as Record<string, string>,
   onboardingComplete: false,
   run: null as RunState | null,
+  bites: EMPTY_BITES,
   staleSaveCleared: false,
   isResolving: false,
 };
@@ -359,6 +410,49 @@ export const useLedgerStore = create<LedgerState>()(
         if (process.env.NODE_ENV === "production") return;
         set((s) => (s.run ? { run: { ...s.run, state: { ...s.run.state, ...patch } } } : {}));
       },
+
+      /* ────────────────────────── quick bites ───────────────────────── */
+
+      recordBiteProgress: (day, seen) =>
+        set((s) => {
+          // A new day wipes yesterday's progress. Within a day the count only
+          // ever climbs, so swiping back to card 2 does not undo the bar.
+          const sameDay = s.bites.day === day;
+          const next = Math.min(
+            DAILY_BITE_COUNT,
+            Math.max(0, sameDay ? Math.max(s.bites.seen, seen) : seen),
+          );
+          if (sameDay && next === s.bites.seen) return {};
+          return { bites: { ...s.bites, day, seen: next } };
+        }),
+
+      /**
+       * ★ Idempotent, on purpose.
+       *
+       * "Review today's cards" runs the deck a second time and reaches this
+       * again. Awarding the XP twice — or bumping the streak twice — would make
+       * the flame a number the app cannot defend.
+       */
+      completeDailyBites: (day) => {
+        const { bites } = get();
+        const alreadyBanked = bites.lastCompletedDay === day;
+
+        set({
+          bites: {
+            ...bites,
+            day,
+            seen: DAILY_BITE_COUNT,
+            streak: nextStreak(bites, day),
+            lastCompletedDay: day,
+            // The cursor only advances the first time. Reviewing today's five
+            // must not skip tomorrow's.
+            cursor: alreadyBanked ? bites.cursor : bites.cursor + DAILY_BITE_COUNT,
+            xp: alreadyBanked ? bites.xp : bites.xp + BITE_XP_REWARD,
+          },
+        });
+
+        return !alreadyBanked;
+      },
     }),
     {
       name: STORAGE_KEY,
@@ -372,6 +466,7 @@ export const useLedgerStore = create<LedgerState>()(
         diagnosticAnswers: s.diagnosticAnswers,
         onboardingComplete: s.onboardingComplete,
         run: s.run,
+        bites: s.bites,
       }),
 
       migrate: (persisted, version) => {

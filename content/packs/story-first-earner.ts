@@ -89,7 +89,7 @@ const M1_FIRST_SALARY: EventCard = {
   pressure: [
     {
       type: "notification",
-      content: "Amma: “Beta, salary aa gayi? Bahut khushi hui. Papa ko bata diya.”",
+      content: "Amma: “Has your salary come? Really happy to hear! Told Appa about it.”",
       delayMs: 400,
     },
     {
@@ -99,7 +99,7 @@ const M1_FIRST_SALARY: EventCard = {
     },
     {
       type: "testimonial",
-      content: "“First salary toh treat banti hai, boss.” — everyone, forever",
+      content: "“First salary calls for a treat, boss.” — everyone, forever",
       delayMs: 2800,
     },
   ],
