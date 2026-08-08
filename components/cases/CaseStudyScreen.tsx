@@ -157,7 +157,7 @@ function FollowUp({ study }: { study: CaseStudy }) {
           maxLength={300}
           placeholder="Why does the decoy work if nobody picks it?"
           aria-label={`Ask a question about ${study.title}`}
-          className="h-12 w-full flex-1 rounded-lg border border-line bg-surface px-4 text-[16px] text-chalk placeholder:text-muted-foreground/70 focus:border-marigold focus:outline-none"
+          className="h-12 w-full flex-1 rounded-lg border border-line bg-surface px-4 text-[16px] text-chalk placeholder:text-muted-foreground/50 focus:border-marigold focus:outline-none"
         />
         <button
           type="submit"

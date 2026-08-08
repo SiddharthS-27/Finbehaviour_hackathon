@@ -26,7 +26,7 @@ export function BiteFace({ bite, hintVisible }: { bite: Bite; hintVisible: boole
       {/* A wash behind the type so the panel is not a flat rectangle. */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_55%_at_50%_-10%,color-mix(in_oklab,var(--marigold)_9%,transparent),transparent_70%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_55%_at_50%_-10%,color-mix(in_oklab,var(--marigold)_14%,transparent),transparent_70%)]"
       />
 
       <span className="relative rounded-sm border border-line bg-surface2 px-2 py-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">

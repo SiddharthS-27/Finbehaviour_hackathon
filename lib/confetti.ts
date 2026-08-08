@@ -10,9 +10,8 @@
  * skipped entirely under reduced motion.
  */
 
-/* Saturated enough to read against smoke white — the old light-theme-hostile
-   near-whites are gone. */
-const PALETTE = ["#A85400", "#1E6B47", "#B3261E"];
+/* Bright enough to read against dark green. */
+const PALETTE = ["#F5AD35", "#F4F3ED", "#5BE0A0"];
 
 export async function fireDopamine(opts?: { reducedMotion?: boolean }): Promise<void> {
   if (opts?.reducedMotion) return;
@@ -54,7 +53,7 @@ export async function fireCelebration(opts?: { reducedMotion?: boolean }): Promi
   try {
     const { default: confetti } = await import("canvas-confetti");
     const shared = {
-      colors: ["#1E6B47", "#A85400", "#6B4FBF"],
+      colors: ["#5BE0A0", "#F5AD35", "#B79BFF", "#F4F3ED"],
       disableForReducedMotion: true,
       ticks: 220,
       gravity: 0.9,

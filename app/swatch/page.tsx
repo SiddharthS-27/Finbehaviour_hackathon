@@ -19,16 +19,16 @@ import {
  */
 
 const TOKENS = [
-  { name: "--ink", hex: "#F4F3ED", role: "page background" },
-  { name: "--surface", hex: "#FCFBF7", role: "raised panels" },
-  { name: "--surface2", hex: "#E9E7DC", role: "hover, inset rows" },
-  { name: "--line", hex: "#D3D0C2", role: "hairlines, always 1px" },
-  { name: "--chalk", hex: "#14251C", role: "primary text" },
-  { name: "--muted", hex: "#566B60", role: "secondary text" },
-  { name: "--marigold", hex: "#A85400", role: "YOU" },
-  { name: "--mint", hex: "#1E6B47", role: "OPTIMAL" },
-  { name: "--rust", hex: "#B3261E", role: "DEBT" },
-  { name: "--violet", hex: "#6B4FBF", role: "the coach" },
+  { name: "--ink", hex: "#12301F", role: "page background" },
+  { name: "--surface", hex: "#1A3D28", role: "raised panels" },
+  { name: "--surface2", hex: "#234B33", role: "hover, inset rows" },
+  { name: "--line", hex: "#37674B", role: "hairlines, always 1px" },
+  { name: "--chalk", hex: "#F4F3ED", role: "primary text" },
+  { name: "--muted", hex: "#9DBCA8", role: "secondary text" },
+  { name: "--marigold", hex: "#F5AD35", role: "YOU" },
+  { name: "--mint", hex: "#5BE0A0", role: "OPTIMAL" },
+  { name: "--rust", hex: "#FF5540", role: "DEBT" },
+  { name: "--violet", hex: "#B79BFF", role: "the coach" },
 ];
 
 const FORMATS: { call: string; out: string; gate?: boolean }[] = [

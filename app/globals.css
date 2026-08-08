@@ -1,8 +1,7 @@
 @import "tailwindcss";
 
-/* The app is light-only — a paper passbook that's alive, not a neobank
-   dashboard. `.dark` is NOT set on <html>, so shadcn's dark: variants stay
-   inert; the variant is kept defined so those components still compile. */
+/* The app is dark-only — a bank passbook that's alive, not a neobank dashboard.
+   `.dark` is hard-set on <html> so shadcn's dark: variants resolve. */
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -15,30 +14,33 @@
    Colour carries data, not decoration.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* ── Light ground, dark ink ──
-     The app inverted on 2026-08-08. Names kept: `--ink` is still "the page" and
-     `--chalk` is still "the text on it", they simply swapped ends of the scale.
-     Renaming them would have touched every file and taught nobody anything.
+  /* ── Dark green ground, smoke-white ink ──
+     Third theme. `--ink` is "the page" and `--chalk` is "the text on it";
+     they have swapped ends of the scale twice now, and the names still describe
+     their roles rather than their values. Do not rename them.
 
-     Every accent below is measured against `--ink`. All four clear 4.5:1, so
-     they are safe for the 10px mono eyebrows this app uses everywhere — not
-     just for large text. */
-  --ink: #f4f3ed; /* page background — warm smoke white */
-  --surface: #fcfbf7; /* raised panels — lift off the page by going lighter */
-  --surface2: #e9e7dc; /* hover, inset rows */
-  --line: #d3d0c2; /* hairlines, always 1px */
-  --chalk: #14251c; /* primary text — near-black green */
-  --muted: #566b60; /* secondary text — 5.9:1, a real colour not a grey */
-  --marigold: #a85400; /* YOU — burnt orange, 4.8:1 */
-  --mint: #1e6b47; /* OPTIMAL — dark green, 5.8:1 */
-  --rust: #b3261e; /* DEBT — red, kept clearly apart from the orange, 5.9:1 */
-  --violet: #6b4fbf; /* the AI coach, 5.4:1 */
+     Every accent is measured against `--ink` and clears 4.5:1, so all of them
+     are safe for the 10px mono eyebrows this app uses everywhere.
 
-  /* ★ What a modal backdrop is made of.
-     On the dark theme `bg-ink/70` dimmed the page because ink was nearly black.
-     Inverted, that same class is a *white* veil over white — it hides nothing.
-     Scrims need their own token now. */
-  --scrim: #14251c;
+     ★ Mint is the one to watch when retuning. It is a green accent on a green
+     ground — it survives on luminance (8.6:1), not on hue, so darkening it
+     toward the background is the one change that would quietly destroy the
+     two-line chart. */
+  --ink: #12301f; /* page background — dark forest green */
+  --surface: #1a3d28; /* raised panels — lighter than the page */
+  --surface2: #234b33; /* hover, inset rows */
+  --line: #37674b; /* hairlines, always 1px */
+  --chalk: #f4f3ed; /* primary text — warm smoke white, 12.9:1 */
+  --muted: #9dbca8; /* secondary text, 7.0:1 */
+  --marigold: #f5ad35; /* YOU — amber, 7.2:1, hue 37° */
+  --mint: #5be0a0; /* OPTIMAL — bright mint, 8.6:1 */
+  --rust: #ff5540; /* DEBT — red, 4.5:1, hue 7° — 30° clear of marigold */
+  --violet: #b79bff; /* the AI coach, 6.2:1 */
+
+  /* ★ Modal backdrops. Deliberately much darker than `--ink` rather than
+     `bg-ink/N`: a dark-green veil over a dark-green page dims almost nothing,
+     which is the bug that shipped when the theme was light. */
+  --scrim: #04100a;
 
   /* ── shadcn semantic layer, mapped onto the palette above ──
      Some shadcn components reference these as raw var() in arbitrary values,
@@ -56,8 +58,7 @@
   --accent: var(--surface2);
   --accent-foreground: var(--chalk);
   --destructive: var(--rust);
-  /* Light-on-red. Was chalk, which is now near-black and unreadable on rust. */
-  --destructive-foreground: var(--ink);
+  --destructive-foreground: var(--chalk);
   --border: var(--line);
   --input: var(--line);
   --ring: var(--marigold);
@@ -131,30 +132,30 @@
 }
 
 /* ── Quick Bites ──
-   The pending widget breathes. Inverted, it breathes *elevation* rather than
-   light: the card rises off the paper and its orange stain deepens, because a
-   white page cannot be made brighter. The reduced-motion block at the bottom of
-   this file freezes it on the resting frame, which is still lifted and still
-   tinted — a static shadow is contrast, not motion, and somebody who asked for
-   less movement did not ask for less legibility. */
+   The pending widget breathes light again: border, tint and bloom all cycle
+   together. The reduced-motion block at the bottom of this file freezes it on
+   the resting frame, which still glows — a static glow is contrast, not motion,
+   and somebody who asked for less movement did not ask for less legibility. */
 @keyframes bite-pulse {
   0%,
   100% {
-    border-color: color-mix(in oklab, var(--marigold) 45%, transparent);
-    background-color: color-mix(in oklab, var(--marigold) 7%, transparent);
-    box-shadow: 0 4px 14px -10px color-mix(in oklab, var(--marigold) 55%, transparent);
+    border-color: color-mix(in oklab, var(--marigold) 55%, transparent);
+    background-color: color-mix(in oklab, var(--marigold) 8%, transparent);
+    box-shadow: 0 0 18px -8px color-mix(in oklab, var(--marigold) 60%, transparent);
   }
   50% {
     border-color: var(--marigold);
-    background-color: color-mix(in oklab, var(--marigold) 14%, transparent);
-    box-shadow: 0 10px 26px -12px color-mix(in oklab, var(--marigold) 75%, transparent);
+    background-color: color-mix(in oklab, var(--marigold) 16%, transparent);
+    box-shadow:
+      0 0 16px -3px color-mix(in oklab, var(--marigold) 80%, transparent),
+      0 0 46px -12px color-mix(in oklab, var(--marigold) 60%, transparent);
   }
 }
 
-/* The completion ring — one expanding halo of dark green, fired once. */
+/* The completion bloom — one expanding ring of mint light, fired once. */
 @keyframes neon-bloom {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in oklab, var(--mint) 45%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--mint) 65%, transparent);
     transform: scale(0.9);
   }
   60% {
@@ -231,23 +232,22 @@
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   ACCENT LIFT  (was: NEON)
+   GLOW
 
    The palette is semantic and stays that way: marigold is you, mint is the
    optimal path, rust is debt, violet is the coach. These utilities only change
-   how *hard* a colour lands, never what it means. Lifting something mint that
+   how *hard* a colour lands, never what it means. Glowing something mint that
    is not the benchmark would quietly break the chart's whole argument.
 
-   ── What inverting the theme did to these ────────────────────────────────
-   On the dark theme these were bloom: light thrown outward from an edge. Bloom
-   is invisible on smoke white — you cannot make a white page brighter. So the
-   same class names now render as **tinted elevation**: a soft coloured drop
-   shadow that lifts the element off the page and stains the paper under it with
-   its own colour. Same job (this thing is lit and important), same names, the
-   only mechanism that reads on a light ground.
+   ── These have been rewritten twice ──────────────────────────────────────
+   Bloom on dark → tinted elevation on smoke white → bloom again, now on dark
+   green. The *class names never changed*, which is why ~30 call sites have
+   survived three themes untouched. Keep it that way: if the ground ever moves
+   again, this block and the palette above are the only things that should.
 
-   Names were kept rather than renamed so the ~30 call sites did not churn. If
-   the theme ever flips back, this block is the only thing that changes.
+   Each glow is two shadows: a tight one that reads as the edge lighting up, and
+   a wide diffuse one that reads as light thrown into the room. Both are
+   colour-mixed from the token, so retuning the palette retunes the glow free.
 
    Declared with `@utility` rather than inside `@layer utilities` so Tailwind v4
    generates the variants — `hover:glow-marigold` is the whole point of a CTA
@@ -255,74 +255,73 @@
    ═════════════════════════════════════════════════════════════════════════ */
 @utility glow-marigold {
   box-shadow:
-    0 1px 2px -1px color-mix(in oklab, var(--marigold) 40%, transparent),
-    0 10px 26px -10px color-mix(in oklab, var(--marigold) 55%, transparent);
+    0 0 14px -4px color-mix(in oklab, var(--marigold) 75%, transparent),
+    0 0 40px -12px color-mix(in oklab, var(--marigold) 55%, transparent);
 }
 @utility glow-mint {
   box-shadow:
-    0 1px 2px -1px color-mix(in oklab, var(--mint) 40%, transparent),
-    0 10px 26px -10px color-mix(in oklab, var(--mint) 55%, transparent);
+    0 0 14px -4px color-mix(in oklab, var(--mint) 75%, transparent),
+    0 0 40px -12px color-mix(in oklab, var(--mint) 55%, transparent);
 }
 @utility glow-violet {
   box-shadow:
-    0 1px 2px -1px color-mix(in oklab, var(--violet) 40%, transparent),
-    0 10px 26px -10px color-mix(in oklab, var(--violet) 55%, transparent);
+    0 0 14px -4px color-mix(in oklab, var(--violet) 75%, transparent),
+    0 0 40px -12px color-mix(in oklab, var(--violet) 55%, transparent);
 }
 @utility glow-rust {
   box-shadow:
-    0 1px 2px -1px color-mix(in oklab, var(--rust) 40%, transparent),
-    0 10px 26px -10px color-mix(in oklab, var(--rust) 55%, transparent);
+    0 0 14px -4px color-mix(in oklab, var(--rust) 75%, transparent),
+    0 0 40px -12px color-mix(in oklab, var(--rust) 55%, transparent);
 }
 /* Resting state — lit, but not asking for anything. */
 @utility glow-soft-marigold {
-  box-shadow: 0 6px 18px -10px color-mix(in oklab, var(--marigold) 60%, transparent);
+  box-shadow: 0 0 24px -10px color-mix(in oklab, var(--marigold) 70%, transparent);
 }
 @utility glow-soft-mint {
-  box-shadow: 0 6px 18px -10px color-mix(in oklab, var(--mint) 60%, transparent);
+  box-shadow: 0 0 24px -10px color-mix(in oklab, var(--mint) 70%, transparent);
 }
 
 /**
- * Deliberately inert on the light theme.
+ * Live again on a dark ground.
  *
- * A text-shadow halo behind near-black text on smoke white is either invisible
- * or a smudge — there is no version of it that helps. The classes stay defined
- * so the call sites keep working and so flipping the theme back is one edit in
- * this file rather than a hunt through components. Weight, size and colour do
- * the emphasis now; that is what works on paper.
+ * These were inert on the light theme — a halo behind near-black text on smoke
+ * white is invisible or a smudge. Against dark green they do the job they were
+ * written for. Kept deliberately restrained: a heavy halo on body copy costs
+ * legibility, so these are for display type and accent labels only.
  */
 @utility text-glow-marigold {
-  text-shadow: none;
+  text-shadow: 0 0 16px color-mix(in oklab, var(--marigold) 55%, transparent);
 }
 @utility text-glow-mint {
-  text-shadow: none;
+  text-shadow: 0 0 16px color-mix(in oklab, var(--mint) 55%, transparent);
 }
 @utility text-glow-violet {
-  text-shadow: none;
+  text-shadow: 0 0 16px color-mix(in oklab, var(--violet) 55%, transparent);
 }
 @utility text-glow-chalk {
-  text-shadow: none;
+  text-shadow: 0 0 22px color-mix(in oklab, var(--chalk) 25%, transparent);
 }
 
 /**
- * Faint colour in the paper, so a full-bleed page is not a flat white
- * rectangle. Much weaker than the dark theme's version — on white, a wash at
- * the old strength reads as a stain rather than as light.
+ * Off-screen colour washes so a full-bleed page is not a flat rectangle of one
+ * green. Stronger than the light theme's version — on a dark ground a wash has
+ * to actually carry light to be visible at all.
  */
 @utility aurora {
   background-image:
     radial-gradient(
       60% 45% at 12% 0%,
-      color-mix(in oklab, var(--marigold) 9%, transparent) 0%,
+      color-mix(in oklab, var(--marigold) 15%, transparent) 0%,
       transparent 70%
     ),
     radial-gradient(
       55% 40% at 92% 8%,
-      color-mix(in oklab, var(--violet) 8%, transparent) 0%,
+      color-mix(in oklab, var(--violet) 14%, transparent) 0%,
       transparent 70%
     ),
     radial-gradient(
       70% 50% at 50% 108%,
-      color-mix(in oklab, var(--mint) 9%, transparent) 0%,
+      color-mix(in oklab, var(--mint) 13%, transparent) 0%,
       transparent 70%
     );
 }

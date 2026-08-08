@@ -62,7 +62,7 @@ function Field({
         onKeyDown={(e) => {
           if (e.key === "Enter") onEnter?.();
         }}
-        className="h-13 w-full rounded-lg border border-line bg-surface px-4 py-3 text-[16px] text-chalk placeholder:text-muted-foreground/70 focus:border-marigold focus:outline-none"
+        className="h-13 w-full rounded-lg border border-line bg-surface px-4 py-3 text-[16px] text-chalk placeholder:text-muted-foreground/50 focus:border-marigold focus:outline-none"
       />
       {hint ? <span className="text-[12px] text-muted-foreground">{hint}</span> : null}
     </label>
