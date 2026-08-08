@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 /** Next serves this at /manifest.webmanifest and links it automatically. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Compound",
-    short_name: "Compound",
+    name: "LifeLedger",
+    short_name: "LifeLedger",
     description: "Two years of your money, in twenty minutes.",
     start_url: "/",
     scope: "/",

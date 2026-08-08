@@ -39,8 +39,12 @@ export interface LifeStageOption {
 }
 
 /**
- * Five buckets, one live. The other four are shown greyed and labelled —
- * judges read a roadmap, not an absence.
+ * The buckets a player can be in.
+ *
+ * Only `available` ones are ever rendered — see `AVAILABLE_LIFE_STAGES`. A card
+ * for a deck that does not exist is a promise the app cannot keep, so the whole
+ * step disappears while there is only one answer and reappears on its own when
+ * a second pack lands.
  */
 export const LIFE_STAGES: LifeStageOption[] = [
   {
@@ -299,6 +303,9 @@ export function scalePack(pack: ContentPack, tier: IncomeTier): ContentPack {
 export function tierForIncome(tier: IncomeTier): number {
   return TIER_MULTIPLIER[tier];
 }
+
+/** Only the stages with a deck behind them. The onboarding step reads this. */
+export const AVAILABLE_LIFE_STAGES: LifeStageOption[] = LIFE_STAGES.filter((s) => s.available);
 
 export function lifeStageLabel(id: LifeStage): string {
   return LIFE_STAGES.find((s) => s.id === id)?.label ?? id;

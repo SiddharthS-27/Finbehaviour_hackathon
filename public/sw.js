@@ -1,4 +1,4 @@
-/* Compound — app-shell service worker.
+/* LifeLedger — app-shell service worker.
  *
  * Game state lives in localStorage via Zustand persist, so refresh and offline
  * reopen already work without any of this. All the SW adds is a cold offline
@@ -9,7 +9,7 @@
  * /_next/static is content-hashed and immutable, so it is cache-first.
  */
 
-const CACHE = "compound-v1";
+const CACHE = "lifeledger-v1";
 const SHELL = ["/", "/icon-192.png", "/icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

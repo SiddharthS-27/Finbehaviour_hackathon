@@ -11,6 +11,14 @@ import type {
   SimState,
 } from "@/lib/sim/types";
 import { scoreDiagnostic, type DiagnosticResult } from "@/content/diagnostic";
+import {
+  createAccount,
+  normaliseUsername,
+  validatePassword,
+  validateUsername,
+  verifyPassword,
+  type Account,
+} from "@/lib/auth/account";
 import { advanceMonth, createInitialState } from "@/lib/sim/engine";
 import { eventForMonth, marketForRun } from "@/lib/sim/deck";
 import { runOptimal, type OptimalRun } from "@/lib/sim/agent";
@@ -28,9 +36,10 @@ import { packForMode, packById } from "@/content/packs";
  * current engine cannot read. (Edge case 19.)
  *
  * v2 — added the run slice.
+ * v3 — added the account slice, and renamed the storage key with the product.
  */
-export const SCHEMA_VERSION = 2;
-export const STORAGE_KEY = "compound";
+export const SCHEMA_VERSION = 3;
+export const STORAGE_KEY = "lifeledger";
 
 export const DEFAULT_PROFILE: Profile = {
   name: "",
@@ -72,7 +81,20 @@ export interface RunState {
   choiceId: string | null;
 }
 
-interface CompoundState {
+export type AuthResult = { ok: true } | { ok: false; error: string };
+
+interface LedgerState {
+  /**
+   * One account per device.
+   *
+   * There is no server, so a user directory would be a fiction. What this is
+   * instead: a real credential check against a salted, stretched hash, which is
+   * what makes "sign in" mean something rather than being a doorway.
+   */
+  account: Account | null;
+  /** Lowercased username of whoever is signed in. Persisted, so a refresh holds. */
+  sessionUser: string | null;
+
   profile: Profile;
   diagnosticAnswers: Record<string, string>;
   onboardingComplete: boolean;
@@ -81,6 +103,10 @@ interface CompoundState {
   /** Transient — never persisted. */
   staleSaveCleared: boolean;
   isResolving: boolean;
+
+  signUp: (username: string, password: string) => AuthResult;
+  signIn: (username: string, password: string) => AuthResult;
+  signOut: () => void;
 
   updateProfile: (patch: Partial<Profile>) => void;
   answerDiagnostic: (questionId: string, optionId: string) => void;
@@ -101,6 +127,8 @@ interface CompoundState {
 }
 
 const INITIAL = {
+  account: null as Account | null,
+  sessionUser: null as string | null,
   profile: DEFAULT_PROFILE,
   diagnosticAnswers: {} as Record<string, string>,
   onboardingComplete: false,
@@ -169,10 +197,52 @@ export function optimalForRun(run: RunState): OptimalRun {
   return result;
 }
 
-export const useCompoundStore = create<CompoundState>()(
+export const useLedgerStore = create<LedgerState>()(
   persist(
     (set, get) => ({
       ...INITIAL,
+
+      /* ───────────────────────── account ───────────────────────── */
+
+      /**
+       * Creating an account replaces any previous one, along with its profile
+       * and its run. Handing a new person the last person's twelve months would
+       * be worse than losing them.
+       */
+      signUp: (username, password) => {
+        const name = validateUsername(username);
+        if (!name.ok) return name;
+        const secret = validatePassword(password);
+        if (!secret.ok) return secret;
+
+        const account = createAccount(username, password, Date.now());
+        set({
+          ...INITIAL,
+          account,
+          sessionUser: account.key,
+          profile: { ...DEFAULT_PROFILE, name: account.username },
+        });
+        return { ok: true };
+      },
+
+      /**
+       * One deliberately vague error for both a wrong username and a wrong
+       * password: naming which half was wrong tells anyone holding the phone
+       * whether an account exists.
+       */
+      signIn: (username, password) => {
+        const account = get().account;
+        const wrong: AuthResult = { ok: false, error: "That username and password do not match." };
+        if (!account) return { ok: false, error: "No account on this device yet. Create one." };
+        if (account.key !== normaliseUsername(username)) return wrong;
+        if (!verifyPassword(account, password)) return wrong;
+
+        set({ sessionUser: account.key });
+        return { ok: true };
+      },
+
+      /** Signs out without touching the account, the profile or the run. */
+      signOut: () => set({ sessionUser: null, isResolving: false }),
 
       /* ───────────────────────── profile ───────────────────────── */
 
@@ -296,6 +366,8 @@ export const useCompoundStore = create<CompoundState>()(
       storage: safeStorage,
 
       partialize: (s) => ({
+        account: s.account,
+        sessionUser: s.sessionUser,
         profile: s.profile,
         diagnosticAnswers: s.diagnosticAnswers,
         onboardingComplete: s.onboardingComplete,
@@ -308,7 +380,7 @@ export const useCompoundStore = create<CompoundState>()(
           // say so, and let them start again.
           return { ...INITIAL, staleSaveCleared: true };
         }
-        return persisted as Partial<CompoundState>;
+        return persisted as Partial<LedgerState>;
       },
     },
   ),
@@ -323,11 +395,11 @@ export function useHasHydrated(): boolean {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (useCompoundStore.persist.hasHydrated()) {
+    if (useLedgerStore.persist.hasHydrated()) {
       setHydrated(true);
       return;
     }
-    return useCompoundStore.persist.onFinishHydration(() => setHydrated(true));
+    return useLedgerStore.persist.onFinishHydration(() => setHydrated(true));
   }, []);
 
   return hydrated;
@@ -335,9 +407,15 @@ export function useHasHydrated(): boolean {
 
 /* ───────────────────────────── selectors ───────────────────────────── */
 
-export const selectProfile = (s: CompoundState) => s.profile;
-export const selectOnboardingComplete = (s: CompoundState) => s.onboardingComplete;
-export const selectRun = (s: CompoundState) => s.run;
+export const selectProfile = (s: LedgerState) => s.profile;
+export const selectAccount = (s: LedgerState) => s.account;
+export const selectOnboardingComplete = (s: LedgerState) => s.onboardingComplete;
+export const selectRun = (s: LedgerState) => s.run;
+
+/** True only when an account exists and its session is live. */
+export function isSignedIn(s: Pick<LedgerState, "account" | "sessionUser">): boolean {
+  return Boolean(s.account && s.sessionUser === s.account.key);
+}
 
 /** The run is over once the engine has stepped past the final month. */
 export function isRunComplete(run: RunState | null): boolean {

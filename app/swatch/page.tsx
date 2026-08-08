@@ -63,7 +63,7 @@ export default function SwatchPage() {
     <main className="mx-auto w-full max-w-3xl px-5 py-12 pb-safe">
       <header className="flex flex-col gap-2">
         <Link href="/" className="font-mono text-xs text-muted-foreground hover:text-chalk">
-          ← Compound
+          ← LifeLedger
         </Link>
         <h1 className="font-display text-4xl font-bold text-chalk">Design tokens</h1>
         <p className="text-sm text-muted-foreground">

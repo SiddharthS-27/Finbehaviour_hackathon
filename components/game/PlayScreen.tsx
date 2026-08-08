@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   isRunComplete,
   marketFor,
   optimalForRun,
   packForRun,
-  useCompoundStore,
+  useLedgerStore,
   useHasHydrated,
 } from "@/lib/store";
 import { choiceById, eventForMonth } from "@/lib/sim/deck";
@@ -26,6 +25,7 @@ import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
 import { useCoachLine } from "@/lib/hooks/useAi";
 import { coachFacts } from "@/lib/ai/facts";
 import { CRITICAL, criticalState, lockedSlider } from "@/lib/sim/bandwidth";
+import { AppHeader } from "@/components/chrome/AppHeader";
 import { CriticalLayer } from "./CriticalLayer";
 import { DevPanel } from "./DevPanel";
 import { NetWorthChart } from "./NetWorthChart";
@@ -62,17 +62,16 @@ export function PlayScreen({ mode }: { mode: string }) {
   const hydrated = useHasHydrated();
   const reducedMotion = usePrefersReducedMotion();
 
-  const onboarded = useCompoundStore((s) => s.onboardingComplete);
-  const profile = useCompoundStore((s) => s.profile);
-  const run = useCompoundStore((s) => s.run);
-  const isResolving = useCompoundStore((s) => s.isResolving);
-  const startRun = useCompoundStore((s) => s.startRun);
-  const setAllocation = useCompoundStore((s) => s.setAllocation);
-  const setChoice = useCompoundStore((s) => s.setChoice);
-  const goToEventPhase = useCompoundStore((s) => s.goToEventPhase);
-  const resolveMonth = useCompoundStore((s) => s.resolveMonth);
-  const nextMonth = useCompoundStore((s) => s.nextMonth);
-  const abandonRun = useCompoundStore((s) => s.abandonRun);
+  const onboarded = useLedgerStore((s) => s.onboardingComplete);
+  const profile = useLedgerStore((s) => s.profile);
+  const run = useLedgerStore((s) => s.run);
+  const isResolving = useLedgerStore((s) => s.isResolving);
+  const startRun = useLedgerStore((s) => s.startRun);
+  const setAllocation = useLedgerStore((s) => s.setAllocation);
+  const setChoice = useLedgerStore((s) => s.setChoice);
+  const goToEventPhase = useLedgerStore((s) => s.goToEventPhase);
+  const resolveMonth = useLedgerStore((s) => s.resolveMonth);
+  const nextMonth = useLedgerStore((s) => s.nextMonth);
 
   const complete = isRunComplete(run);
 
@@ -223,24 +222,11 @@ export function PlayScreen({ mode }: { mode: string }) {
       data-coach-source={coachAi ? "ai" : "fallback"}
       data-coach-pending={coachPending ? "1" : "0"}
     >
-      <header className="flex items-center justify-between gap-3 pb-3">
-        <div className="flex items-baseline gap-2">
-          <Link href="/" className="font-display text-lg font-bold text-chalk">
-            Compound
-          </Link>
-          <span className="font-mono text-[11px] text-muted-foreground">{pack.title}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            abandonRun();
-            router.replace("/");
-          }}
-          className="touch-target rounded-sm border border-line px-3 font-mono text-[10px] text-muted-foreground transition-colors hover:border-rust hover:text-rust"
-        >
-          start over
-        </button>
-      </header>
+      {/* ★ Back leaves the run exactly where it is. Zustand persist has already
+          written every decision to this device, so "save" is not an action
+          anybody has to take — but the button has to *say* so, or leaving mid
+          run feels like losing it. */}
+      <AppHeader backHref="/home" backLabel="Home" eyebrow={pack.title} />
 
       {/* ★ the signature element */}
       <TimelineRibbon

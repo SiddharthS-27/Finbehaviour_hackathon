@@ -1,5 +1,5 @@
-import { StartScreen } from "@/components/StartScreen";
+import { TitleScreen } from "@/components/chrome/TitleScreen";
 
-export default function StartPage() {
-  return <StartScreen />;
+export default function TitlePage() {
+  return <TitleScreen />;
 }

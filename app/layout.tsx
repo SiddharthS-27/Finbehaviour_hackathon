@@ -30,16 +30,16 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Compound — two years of your money, in twenty minutes",
+  title: "LifeLedger — two years of your money, in twenty minutes",
   description:
     "You are 23, first job in Chennai, ₹42,000 a month. Twelve months of decisions that compound. See what the gap cost you, in rupees.",
-  applicationName: "Compound",
+  applicationName: "LifeLedger",
   // Safari ignores the web manifest for install behaviour — these are the tags
   // that actually make it launch full-screen from the home screen.
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Compound",
+    title: "LifeLedger",
   },
   icons: {
     icon: [

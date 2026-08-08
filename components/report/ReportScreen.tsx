@@ -8,7 +8,7 @@ import {
   marketFor,
   optimalForRun,
   packForRun,
-  useCompoundStore,
+  useLedgerStore,
   useHasHydrated,
 } from "@/lib/store";
 import { createInitialState } from "@/lib/sim/engine";
@@ -23,6 +23,7 @@ import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
 import { useAiReport } from "@/lib/hooks/useAi";
 import { reportFacts } from "@/lib/ai/facts";
 import { mergeAiReport } from "@/lib/ai/merge";
+import { AppHeader } from "@/components/chrome/AppHeader";
 import { WhatIfPanel } from "./WhatIfPanel";
 import {
   ArchetypeCard,
@@ -65,11 +66,10 @@ export function ReportScreen({ mode }: { mode: string }) {
   const hydrated = useHasHydrated();
   const reducedMotion = usePrefersReducedMotion();
 
-  const run = useCompoundStore((s) => s.run);
-  const profile = useCompoundStore((s) => s.profile);
-  const answers = useCompoundStore((s) => s.diagnosticAnswers);
-  const abandonRun = useCompoundStore((s) => s.abandonRun);
-  const startRun = useCompoundStore((s) => s.startRun);
+  const run = useLedgerStore((s) => s.run);
+  const profile = useLedgerStore((s) => s.profile);
+  const answers = useLedgerStore((s) => s.diagnosticAnswers);
+  const startRun = useLedgerStore((s) => s.startRun);
 
   /** The month whose alternatives are open, and which one is being previewed. */
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
@@ -176,10 +176,10 @@ export function ReportScreen({ mode }: { mode: string }) {
             </button>
           ) : null}
           <Link
-            href="/"
+            href="/home"
             className="touch-target flex items-center rounded-lg border border-line px-5 text-chalk"
           >
-            Back to start
+            Back to home
           </Link>
         </div>
       </main>
@@ -209,24 +209,7 @@ export function ReportScreen({ mode }: { mode: string }) {
       data-report-source={report.source}
       data-report-pending={aiPending ? "1" : "0"}
     >
-      <header className="flex items-center justify-between gap-3 pb-4">
-        <div className="flex items-baseline gap-2">
-          <Link href="/" className="font-display text-lg font-bold text-chalk">
-            Compound
-          </Link>
-          <span className="font-mono text-[11px] text-muted-foreground">{pack.title}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            abandonRun();
-            router.replace("/");
-          }}
-          className="touch-target rounded-sm border border-line px-3 font-mono text-[10px] text-muted-foreground transition-colors hover:border-marigold hover:text-marigold"
-        >
-          play again
-        </button>
-      </header>
+      <AppHeader backHref="/home" backLabel="Home" eyebrow={pack.title} />
 
       <div className="flex flex-col gap-6">
         <ArchetypeCard archetype={report.archetype} playerName={profile.name} />
@@ -308,6 +291,12 @@ export function ReportScreen({ mode }: { mode: string }) {
             className="touch-target flex items-center rounded-lg border border-line px-5 text-chalk transition-colors hover:border-marigold"
           >
             Look something up
+          </Link>
+          <Link
+            href="/home"
+            className="touch-target flex items-center rounded-lg border border-line px-5 text-chalk transition-colors hover:border-marigold"
+          >
+            Home
           </Link>
         </div>
       </div>

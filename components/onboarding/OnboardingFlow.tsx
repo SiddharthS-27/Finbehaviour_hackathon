@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useCompoundStore, useHasHydrated } from "@/lib/store";
-import { INCOME_BANDS, LIFE_STAGES, previewIncome, scalePack } from "@/lib/profile";
+import { useLedgerStore } from "@/lib/store";
+import { useGuard } from "@/lib/hooks/useGuard";
+import { AVAILABLE_LIFE_STAGES, INCOME_BANDS, previewIncome, scalePack } from "@/lib/profile";
 import { DIAGNOSTIC, DIAGNOSTIC_INTRO } from "@/content/diagnostic";
 import { storyFirstEarner } from "@/content/packs";
 import { formatRupees } from "@/lib/format";
@@ -19,8 +19,18 @@ import type { IncomeTier, LifeStage } from "@/lib/sim/types";
  * which is both more accurate and not insulting.
  */
 
-const STEPS = ["name", "stage", "income", "context", "q0", "q1", "q2"] as const;
-type Step = (typeof STEPS)[number];
+/**
+ * The steps, minus any that have only one possible answer.
+ *
+ * With a single life-stage deck built, "where are you right now?" is a screen
+ * with one card on it — so it is dropped and the stage is set from the only
+ * option. When a second pack registers the step comes back on its own.
+ */
+const ALL_STEPS = ["name", "stage", "income", "context", "q0", "q1", "q2"] as const;
+type Step = (typeof ALL_STEPS)[number];
+
+const STEPS: readonly Step[] =
+  AVAILABLE_LIFE_STAGES.length > 1 ? ALL_STEPS : ALL_STEPS.filter((s) => s !== "stage");
 
 /* ─────────────────────────── primitives ─────────────────────────── */
 
@@ -98,13 +108,14 @@ function Skeleton() {
 
 export function OnboardingFlow() {
   const router = useRouter();
-  const hydrated = useHasHydrated();
+  // Onboarding sits behind the account, so there is always someone to set up.
+  const { ready } = useGuard({ requireAuth: true });
 
-  const profile = useCompoundStore((s) => s.profile);
-  const answers = useCompoundStore((s) => s.diagnosticAnswers);
-  const updateProfile = useCompoundStore((s) => s.updateProfile);
-  const answerDiagnostic = useCompoundStore((s) => s.answerDiagnostic);
-  const completeOnboarding = useCompoundStore((s) => s.completeOnboarding);
+  const profile = useLedgerStore((s) => s.profile);
+  const answers = useLedgerStore((s) => s.diagnosticAnswers);
+  const updateProfile = useLedgerStore((s) => s.updateProfile);
+  const answerDiagnostic = useLedgerStore((s) => s.answerDiagnostic);
+  const completeOnboarding = useLedgerStore((s) => s.completeOnboarding);
 
   const [index, setIndex] = useState(0);
   const step: Step = STEPS[index];
@@ -122,7 +133,7 @@ export function OnboardingFlow() {
     };
   }, [profile.incomeTier]);
 
-  if (!hydrated) return <Skeleton />;
+  if (!ready) return <Skeleton />;
 
   const canContinue = (() => {
     switch (step) {
@@ -139,7 +150,7 @@ export function OnboardingFlow() {
     }
   })();
 
-  const back = () => (index === 0 ? router.push("/") : setIndex((i) => i - 1));
+  const back = () => (index === 0 ? router.push("/home") : setIndex((i) => i - 1));
 
   const next = () => {
     if (index < STEPS.length - 1) {
@@ -155,13 +166,16 @@ export function OnboardingFlow() {
             ? "We'll explain everything in plain language."
             : `${result.correct} of 3. We'll pitch explanations to match.`,
     });
-    router.push("/");
+    router.push("/home");
   };
 
-  /* Diagnostic answers advance on tap — the whole thing should take 20 seconds. */
+  /* Diagnostic answers advance on tap — the whole thing should take 20 seconds.
+     ★ Including the last one. Auto-advancing the first two and then stopping
+     dead on the third teaches the player that tapping works, and then makes
+     tapping appear to do nothing on exactly the screen that ends the flow. */
   const pickAnswer = (questionId: string, optionId: string) => {
     answerDiagnostic(questionId, optionId);
-    if (index < STEPS.length - 1) setTimeout(() => setIndex((i) => i + 1), 160);
+    setTimeout(() => (index < STEPS.length - 1 ? setIndex((i) => i + 1) : next()), 160);
   };
 
   return (
@@ -195,30 +209,22 @@ export function OnboardingFlow() {
               className="h-14 w-full rounded-lg border border-line bg-surface px-4 text-lg text-chalk placeholder:text-muted-foreground/60 focus:border-marigold focus:outline-none"
             />
             <p className="text-sm text-muted-foreground">
-              Stays on this device. There is no account and no server.
+              This is the name the app will use for you. You can change it later.
             </p>
           </>
         )}
 
         {step === "stage" && (
           <>
-            <StepHeading eyebrow="Step 2 of 7" title="Where are you right now?" />
+            <StepHeading eyebrow={`Step ${STEPS.indexOf("stage") + 1} of ${STEPS.length}`} title="Where are you right now?" />
             <div className="flex flex-col gap-2">
-              {LIFE_STAGES.map((s) => (
+              {AVAILABLE_LIFE_STAGES.map((s) => (
                 <OptionCard
                   key={s.id}
                   selected={profile.lifeStage === s.id}
-                  disabled={!s.available}
                   onClick={() => updateProfile({ lifeStage: s.id as LifeStage })}
                   title={s.label}
                   blurb={s.blurb}
-                  trailing={
-                    s.available ? null : (
-                      <span className="shrink-0 rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                        coming soon
-                      </span>
-                    )
-                  }
                 />
               ))}
             </div>
@@ -227,7 +233,7 @@ export function OnboardingFlow() {
 
         {step === "income" && (
           <>
-            <StepHeading eyebrow="Step 3 of 7" title="Roughly what do you take home?" />
+            <StepHeading eyebrow={`Step ${STEPS.indexOf("income") + 1} of ${STEPS.length}`} title="Roughly what do you take home?" />
             <div className="flex flex-col gap-2">
               {INCOME_BANDS.map((b) => (
                 <OptionCard
@@ -262,7 +268,7 @@ export function OnboardingFlow() {
 
         {step === "context" && (
           <>
-            <StepHeading eyebrow="Step 4 of 7" title="A couple of details" />
+            <StepHeading eyebrow={`Step ${STEPS.indexOf("context") + 1} of ${STEPS.length}`} title="A couple of details" />
             <label className="flex flex-col gap-2">
               <span className="text-sm text-muted-foreground">Where do you live?</span>
               <input
@@ -376,13 +382,6 @@ export function OnboardingFlow() {
           {index === STEPS.length - 1 ? "Done" : "Continue"}
         </button>
       </div>
-
-      <Link
-        href="/"
-        className="pb-4 text-center text-sm text-muted-foreground hover:text-chalk"
-      >
-        Skip for now
-      </Link>
     </main>
   );
 }

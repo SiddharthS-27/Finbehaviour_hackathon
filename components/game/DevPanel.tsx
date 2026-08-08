@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCompoundStore } from "@/lib/store";
+import { useLedgerStore } from "@/lib/store";
 import { CRITICAL } from "@/lib/sim/bandwidth";
 import type { SimState } from "@/lib/sim/types";
 
@@ -17,8 +17,8 @@ import type { SimState } from "@/lib/sim/types";
  * from its seed, and that property is what everything else rests on.
  */
 export function DevPanel() {
-  const run = useCompoundStore((s) => s.run);
-  const devForce = useCompoundStore((s) => s.devForce);
+  const run = useLedgerStore((s) => s.run);
+  const devForce = useLedgerStore((s) => s.devForce);
   const [open, setOpen] = useState(false);
 
   if (process.env.NODE_ENV === "production") return null;

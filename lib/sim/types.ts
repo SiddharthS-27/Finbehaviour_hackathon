@@ -1,5 +1,5 @@
 /**
- * COMPOUND — domain model.
+ * LifeLedger — domain model.
  *
  * Everything in `lib/sim/` is pure: no React, no Math.random, no Date, no IO.
  * See CLAUDE.md rule 1. This file defines the shapes; `engine.ts` moves them.

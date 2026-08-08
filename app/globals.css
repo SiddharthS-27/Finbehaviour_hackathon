@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   COMPOUND palette — the raw tokens.
+   LIFELEDGER palette — the raw tokens.
 
    THE COLOUR RULE, ABSOLUTE:
      marigold is YOU.  mint is the OPTIMAL path.  rust is DEBT.
@@ -145,7 +145,7 @@
   --color-muted: var(--surface2);
   --color-muted-foreground: var(--muted);
 
-  /* COMPOUND colours, addressable directly: bg-ink, text-marigold, border-line */
+  /* LifeLedger colours, addressable directly: bg-ink, text-marigold, border-line */
   --color-ink: var(--ink);
   --color-surface: var(--surface);
   --color-surface2: var(--surface2);

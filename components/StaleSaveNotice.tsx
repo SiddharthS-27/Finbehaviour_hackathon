@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { useCompoundStore, useHasHydrated } from "@/lib/store";
+import { useLedgerStore, useHasHydrated } from "@/lib/store";
 
 /**
  * Tells the player when a save from an older schema was discarded.
@@ -13,8 +13,8 @@ import { useCompoundStore, useHasHydrated } from "@/lib/store";
  */
 export function StaleSaveNotice() {
   const hydrated = useHasHydrated();
-  const cleared = useCompoundStore((s) => s.staleSaveCleared);
-  const acknowledge = useCompoundStore((s) => s.acknowledgeStaleSave);
+  const cleared = useLedgerStore((s) => s.staleSaveCleared);
+  const acknowledge = useLedgerStore((s) => s.acknowledgeStaleSave);
 
   useEffect(() => {
     if (!hydrated || !cleared) return;
