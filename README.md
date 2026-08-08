@@ -312,7 +312,7 @@ functional**. A countdown is a game mechanic, not an animation.
 
 ## Content packs
 
-**One engine, several decks** (CLAUDE.md rule 5). Story Mode, the historical case study and Short
+**One engine, several decks.** Story Mode, the historical case study and Short
 Bites are the same `advanceMonth()` with different configs, rendered by the same
 `app/play/[mode]/page.tsx` and `app/report/[mode]/page.tsx`. If you find yourself writing a second
 game loop, stop.
@@ -568,7 +568,7 @@ Also useful: `npm run lint` and `npx tsc --noEmit`.
 
 ## Working rules
 
-Full text in [CLAUDE.md](CLAUDE.md). The short version, for anyone touching this repo:
+The short version, for anyone touching this repo:
 
 1. **The engine is pure.** No React, no `Math.random()`, no `Date`, no IO under `lib/sim/`.
 2. **All money is integer rupees.** Every money expression ends in `Math.round()`. Formatting is
@@ -576,11 +576,10 @@ Full text in [CLAUDE.md](CLAUDE.md). The short version, for anyone touching this
 3. **The LLM never computes.** A prompt containing "calculate" or "estimate" is a bug.
 4. **Every AI surface has an authored fallback, and the fallback ships first.**
 5. **One engine, four content packs.** A second game loop means something has gone wrong.
-6. **Phase gates.** Never refactor a completed phase without asking.
-7. **Never commit.** The human makes every commit. Reading git is fine.
-8. **Log issues as you find them** in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
-9. **Never run the dev server or build.** Two processes fighting over `.next` is a recurring,
-   expensive failure mode here. Tests, lint and `tsc` are fine.
+6. **Phase gates.** Don't refactor a completed phase without discussing it first.
+7. **Log issues as you find them** in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+8. **Don't run two dev servers, or a dev server and a build, at once.** Fighting over `.next` is a
+   recurring, expensive failure mode here.
 
 ---
 
@@ -588,7 +587,6 @@ Full text in [CLAUDE.md](CLAUDE.md). The short version, for anyone touching this
 
 | File | What's in it |
 |---|---|
-| [CLAUDE.md](CLAUDE.md) | The load-bearing working rules. Read before writing code. |
 | [COMPOUND_IMPLEMENTATION_PLAN.md](COMPOUND_IMPLEMENTATION_PLAN.md) | Full spec: domain model, engine order, packs, phases, edge cases, demo script |
 | [STORY_MODE_EVENTS.md](STORY_MODE_EVENTS.md) | Event copy for the 12-month story deck |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Running record of deviations, workarounds and open questions, per phase, each with a status |
