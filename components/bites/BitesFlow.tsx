@@ -46,8 +46,12 @@ function ProgressSegments({ total, index }: { total: number; index: number }) {
         <span
           key={i}
           className={cn(
-            "h-1 flex-1 rounded-full transition-colors duration-300",
-            i < index ? "bg-marigold" : i === index ? "bg-marigold/55" : "bg-line",
+            "h-1 flex-1 rounded-full transition-all duration-300",
+            i < index
+              ? "glow-marigold bg-marigold"
+              : i === index
+                ? "bg-marigold/60"
+                : "bg-line",
           )}
         />
       ))}
@@ -165,12 +169,12 @@ function Completion({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 26 }}
     >
-      <div className="flex size-16 items-center justify-center rounded-full border border-mint/60 bg-mint/12">
-        <SparklesIcon className="size-7 text-mint" aria-hidden />
+      <div className="glow-mint animate-neon-bloom flex size-16 items-center justify-center rounded-full border border-mint bg-mint/15">
+        <SparklesIcon className="text-glow-mint size-7 text-mint" aria-hidden />
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-3xl leading-tight font-bold text-chalk">
+        <h2 className="text-glow-mint font-display text-[34px] leading-tight font-bold text-chalk">
           Brain expanded.
         </h2>
         <p className="text-[15px] leading-snug text-chalk/80">
@@ -181,8 +185,8 @@ function Completion({
       {/* ★ The tie-in. Bite XP is banked to the ledger rather than poured into
           a live run — a run's numbers have to stay derivable from its own
           decisions, or the shadow-agent comparison stops being honest. */}
-      <div className="flex flex-col items-center gap-1 rounded-lg border border-marigold/50 bg-marigold/10 px-5 py-3">
-        <span className="font-mono text-[20px] text-marigold tabular-nums">
+      <div className="glow-marigold flex flex-col items-center gap-1 rounded-lg border border-marigold bg-marigold/12 px-5 py-3">
+        <span className="text-glow-marigold font-mono text-[22px] font-medium text-marigold tabular-nums">
           {awarded ? `+${BITE_XP_REWARD} XP` : "Already banked"}
         </span>
         <span className="text-[12px] text-muted-foreground">
@@ -202,7 +206,7 @@ function Completion({
         <button
           type="button"
           onClick={onExit}
-          className="touch-target w-full rounded-lg bg-marigold px-5 font-medium text-ink transition-colors hover:bg-marigold/90"
+          className="glow-soft-marigold touch-target w-full rounded-lg bg-marigold px-5 font-medium text-ink transition-shadow hover:glow-marigold"
         >
           Return to simulation
         </button>
@@ -319,7 +323,7 @@ export function BitesFlow({
       data-bite-index={index}
       data-bite-expanded={expanded ? "1" : "0"}
       data-bite-done={done ? "1" : "0"}
-      className="fixed inset-0 z-50 flex flex-col bg-ink pt-safe outline-none"
+      className="aurora fixed inset-0 z-50 flex flex-col bg-ink pt-safe outline-none"
     >
       {/* ── top bar ── */}
       <div className="flex shrink-0 items-center gap-3 px-4 pt-4 pb-3">
@@ -393,7 +397,7 @@ export function BitesFlow({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="touch-target flex-1 rounded-lg border border-marigold/60 bg-marigold/10 px-4 text-[14px] font-medium text-marigold transition-colors hover:bg-marigold/20"
+            className="glow-soft-marigold text-glow-marigold touch-target flex-1 rounded-lg border border-marigold bg-marigold/12 px-4 text-[14px] font-medium text-marigold transition-shadow hover:glow-marigold"
           >
             Reveal the truth
           </button>
@@ -401,7 +405,7 @@ export function BitesFlow({
             type="button"
             onClick={next}
             data-testid="bite-next"
-            className="touch-target rounded-lg bg-marigold px-4 text-[14px] font-medium text-ink transition-colors hover:bg-marigold/90"
+            className="glow-soft-marigold touch-target rounded-lg bg-marigold px-4 text-[14px] font-medium text-ink transition-shadow hover:glow-marigold"
           >
             {index === deck.length - 1 ? "Finish" : "Next →"}
           </button>
@@ -415,7 +419,7 @@ export function BitesFlow({
             <motion.button
               type="button"
               aria-label="Close details"
-              className="absolute inset-0 z-10 cursor-default bg-ink/70"
+              className="absolute inset-0 z-10 cursor-default bg-scrim/45"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

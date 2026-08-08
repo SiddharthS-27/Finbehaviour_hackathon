@@ -310,7 +310,7 @@ export function PlayScreen({ mode }: { mode: string }) {
               "touch-target w-full rounded-lg px-6 text-base font-medium transition-colors",
               cta.disabled
                 ? "cursor-not-allowed bg-surface2 text-muted-foreground"
-                : "bg-marigold text-ink hover:bg-marigold/90",
+                : "glow-soft-marigold bg-marigold text-ink transition-shadow hover:glow-marigold",
             )}
           >
             {cta.label}

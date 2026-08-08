@@ -20,29 +20,37 @@ import type { Bite, BiteDemo } from "@/content/bites";
 
 export function BiteFace({ bite, hintVisible }: { bite: Bite; hintVisible: boolean }) {
   return (
-    <div className="flex h-full flex-col items-center justify-between rounded-lg border border-line bg-surface p-6 text-center select-none">
-      <span className="rounded-sm border border-line bg-surface2 px-2 py-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+    // ★ The card is lit from its own edge. This is the Gen Z surface, so it is
+    //   the one place in the app that spends contrast freely.
+    <div className="glow-soft-marigold relative flex h-full flex-col items-center justify-between overflow-hidden rounded-lg border border-marigold/35 bg-surface p-6 text-center select-none">
+      {/* A wash behind the type so the panel is not a flat rectangle. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_55%_at_50%_-10%,color-mix(in_oklab,var(--marigold)_9%,transparent),transparent_70%)]"
+      />
+
+      <span className="relative rounded-sm border border-line bg-surface2 px-2 py-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
         Level {bite.level} · {bite.category}
       </span>
 
       {/* ★ The hook is the card. Nothing competes with it. */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
-        <p className="font-display text-[26px] leading-[1.15] font-bold text-balance text-chalk sm:text-3xl">
+      <div className="relative flex flex-1 flex-col items-center justify-center gap-5 py-6">
+        <p className="text-glow-chalk font-display text-[27px] leading-[1.12] font-bold text-balance text-chalk sm:text-[32px]">
           {bite.hook}
         </p>
-        <span className="rounded-sm border border-marigold/50 bg-marigold/12 px-2.5 py-1 font-mono text-[12px] tracking-wide text-marigold uppercase">
+        <span className="glow-marigold text-glow-marigold rounded-sm border border-marigold bg-marigold/15 px-3 py-1.5 font-mono text-[12px] font-medium tracking-wide text-marigold uppercase">
           {bite.term}
         </span>
       </div>
 
       <span
         className={cn(
-          "flex flex-col items-center gap-1 text-[12px] text-muted-foreground transition-opacity",
+          "relative flex flex-col items-center gap-1 text-[12px] text-muted-foreground transition-opacity",
           hintVisible ? "opacity-100" : "opacity-0",
         )}
         aria-hidden
       >
-        <ChevronUpIcon className="size-4 animate-bite-hint text-marigold" />
+        <ChevronUpIcon className="text-glow-marigold size-4 animate-bite-hint text-marigold" />
         Swipe up to reveal the truth
       </span>
     </div>
@@ -187,7 +195,7 @@ export function BiteDetail({
             <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
               Level {bite.level} · {bite.category}
             </span>
-            <h2 className="font-display text-2xl leading-tight font-bold text-chalk">
+            <h2 className="text-glow-marigold font-display text-[26px] leading-tight font-bold text-marigold">
               {bite.term}
             </h2>
           </header>
@@ -204,8 +212,8 @@ export function BiteDetail({
           {/* ★ The golden rule is mint, and that is not decoration: mint is the
               optimal path everywhere else in this app, and this is the line
               that tells you what the optimal path is. */}
-          <section className="flex flex-col gap-2 rounded-lg border border-mint/60 bg-mint/10 p-4">
-            <span className="font-mono text-[10px] tracking-widest text-mint uppercase">
+          <section className="glow-mint flex flex-col gap-2 rounded-lg border border-mint bg-mint/12 p-4">
+            <span className="text-glow-mint font-mono text-[10px] tracking-widest text-mint uppercase">
               The golden rule
             </span>
             <p className="text-[15px] leading-snug font-medium text-chalk">{bite.goldenRule}</p>

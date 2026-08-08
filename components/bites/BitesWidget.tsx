@@ -13,9 +13,10 @@ import { DAILY_BITE_COUNT } from "@/lib/bites";
  * nagging after you have done it is a daily habit people turn off.
  *
  * ── On "glowing" ──────────────────────────────────────────────────────────
- * CLAUDE.md forbids drop shadows outright, so the pending state pulses its 1px
- * marigold hairline and its tint instead of casting light. Same read at a
- * glance, no glow, palette intact. Killed entirely under reduced motion.
+ * The pending state actually casts light — border, tint and bloom all breathe
+ * together on `bite-pulse`. Reduced motion freezes the cycle on its resting
+ * frame, which still glows: a static glow is contrast, not animation, and
+ * somebody who asked for less movement did not ask for less legibility.
  */
 
 /** The 0/5 ring. Pure SVG — no library, no layout shift. */
@@ -60,7 +61,7 @@ function ProgressRing({
       </svg>
       <span className="absolute inset-0 flex items-center justify-center">
         {done ? (
-          <CheckIcon className="size-5 text-mint" aria-hidden />
+          <CheckIcon className="text-glow-mint size-5 text-mint" aria-hidden />
         ) : (
           <span className="font-mono text-[12px] text-chalk tabular-nums">
             {seen}/{total}
@@ -80,7 +81,9 @@ function StreakFlame({ streak }: { streak: number }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 font-mono text-[11px]",
-        lit ? "border-marigold/50 text-marigold" : "border-line text-muted-foreground",
+        lit
+          ? "glow-soft-marigold text-glow-marigold border-marigold text-marigold"
+          : "border-line text-muted-foreground",
       )}
       title={lit ? `${streak}-day streak` : "No streak yet — today starts one"}
     >
@@ -115,7 +118,7 @@ export function BitesWidget({
         "mb-6 flex items-center gap-4 rounded-lg border p-4",
         complete
           ? "border-line bg-surface"
-          : "animate-bite-pulse border-marigold/60 bg-marigold/10",
+          : "animate-bite-pulse border-marigold bg-marigold/10",
       )}
     >
       <ProgressRing seen={complete ? DAILY_BITE_COUNT : seen} total={DAILY_BITE_COUNT} done={complete} />
@@ -152,10 +155,10 @@ export function BitesWidget({
         data-testid="bites-cta"
         onClick={complete ? onReview : onStart}
         className={cn(
-          "touch-target shrink-0 rounded-lg px-4 text-[14px] font-medium transition-colors",
+          "touch-target shrink-0 rounded-lg px-4 text-[14px] font-medium transition-all",
           complete
-            ? "border border-line text-chalk hover:border-mint hover:text-mint"
-            : "bg-marigold text-ink hover:bg-marigold/90",
+            ? "border border-line text-chalk hover:glow-soft-mint hover:border-mint hover:text-mint"
+            : "glow-soft-marigold bg-marigold text-ink hover:glow-marigold",
         )}
       >
         {complete ? "Review" : seen > 0 ? "Resume" : "Start learning"}

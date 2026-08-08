@@ -57,7 +57,7 @@ export const viewport: Viewport = {
   // viewport-fit=cover, so env(safe-area-inset-*) resolves to real values and
   // the advance button can clear the iOS home indicator.
   viewportFit: "cover",
-  themeColor: "#0F1D1B",
+  themeColor: "#F4F3ED",
 };
 
 export default function RootLayout({
@@ -66,12 +66,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${fraunces.variable} ${instrumentSans.variable} ${plexMono.variable}`}
+      className={`${fraunces.variable} ${instrumentSans.variable} ${plexMono.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh bg-ink text-chalk antialiased">
         {children}
-        <Toaster theme="dark" position="top-center" />
+        <Toaster theme="light" position="top-center" />
         <StaleSaveNotice />
         <ServiceWorkerRegistrar />
       </body>

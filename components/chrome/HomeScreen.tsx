@@ -142,7 +142,7 @@ export function HomeScreen() {
       <AppHeader />
 
       <div className="flex flex-col gap-2 pb-6">
-        <h1 className="font-display text-3xl leading-tight font-bold text-chalk sm:text-4xl">
+        <h1 className="text-glow-chalk font-display text-3xl leading-tight font-bold text-chalk sm:text-4xl">
           {profile.name ? `Hello, ${profile.name}.` : "Hello."}
         </h1>
         <p className="text-[14px] leading-snug text-muted-foreground">
@@ -157,7 +157,7 @@ export function HomeScreen() {
       {live ? (
         <section
           data-testid="resume"
-          className="mb-6 flex flex-col gap-3 rounded-lg border border-marigold/60 bg-marigold/10 p-4"
+          className="glow-soft-marigold mb-6 flex flex-col gap-3 rounded-lg border border-marigold bg-marigold/10 p-4"
         >
           <div className="flex flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-marigold uppercase">
@@ -174,7 +174,7 @@ export function HomeScreen() {
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/play/${live.mode}`}
-              className="touch-target flex items-center rounded-lg bg-marigold px-5 font-medium text-ink transition-colors hover:bg-marigold/90"
+              className="glow-soft-marigold touch-target flex items-center rounded-lg bg-marigold px-5 font-medium text-ink transition-shadow hover:glow-marigold"
             >
               Continue
             </Link>
@@ -197,7 +197,7 @@ export function HomeScreen() {
         <Link
           href={`/report/${finished.mode}`}
           data-testid="last-report"
-          className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-mint"
+          className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-all hover:glow-soft-mint hover:border-mint"
         >
           <div className="flex min-w-0 flex-col">
             <span className="font-mono text-[10px] tracking-widest text-mint uppercase">
@@ -243,8 +243,8 @@ export function HomeScreen() {
               className={cn(
                 "flex flex-col gap-2 rounded-lg border bg-surface p-4 transition-colors",
                 isLive
-                  ? "border-marigold/50 hover:border-marigold"
-                  : "border-line hover:border-marigold hover:bg-surface2",
+                  ? "glow-soft-marigold border-marigold hover:glow-marigold"
+                  : "border-line hover:glow-soft-marigold hover:border-marigold hover:bg-surface2",
               )}
             >
               <div className="flex items-start justify-between gap-3">

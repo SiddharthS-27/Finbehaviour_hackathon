@@ -150,7 +150,7 @@ export function ExplainerScreen() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search — try “interest”, “buffer”, “OTP”"
-        className="h-12 w-full rounded-lg border border-line bg-surface px-4 text-[16px] text-chalk placeholder:text-muted-foreground/50 focus:border-marigold focus:outline-none"
+        className="h-12 w-full rounded-lg border border-line bg-surface px-4 text-[16px] text-chalk placeholder:text-muted-foreground/70 focus:border-marigold focus:outline-none"
       />
 
       <div className="flex flex-col gap-7 pt-6 pb-10">

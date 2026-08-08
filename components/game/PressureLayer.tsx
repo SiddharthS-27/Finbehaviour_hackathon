@@ -136,7 +136,7 @@ function Beat({ beat, reducedMotion }: { beat: PressureBeat; reducedMotion: bool
       return (
         <div
           className={cn(
-            "flex items-start gap-2 rounded-sm border border-line bg-ink/80 px-3 py-2",
+            "flex items-start gap-2 rounded-sm border border-line bg-surface/90 px-3 py-2",
             anim,
           )}
         >
@@ -225,7 +225,7 @@ export function PressureDim({ active }: { active: boolean }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-40 bg-ink/55 transition-opacity duration-700"
+      className="pointer-events-none fixed inset-0 z-40 bg-scrim/45 transition-opacity duration-700"
     />
   );
 }
@@ -272,7 +272,7 @@ export function PressureCountdown({
           {countdown.expired ? "0:00" : formatClock(countdown.remaining)}
         </span>
       </div>
-      <div className="h-1 w-full overflow-hidden rounded-full bg-ink">
+      <div className="h-1 w-full overflow-hidden rounded-full bg-surface2">
         <div
           className={cn("h-full rounded-full", urgent ? "bg-rust" : "bg-marigold")}
           style={{ width: `${Math.max(0, Math.min(1, countdown.fraction)) * 100}%` }}
