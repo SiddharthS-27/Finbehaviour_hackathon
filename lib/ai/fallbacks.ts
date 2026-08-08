@@ -349,6 +349,13 @@ export interface ReportData {
    *   and the report must not congratulate the second as if it were the first.
    */
   nothingCostlyReason: "flawless" | "luck" | null;
+  /**
+   * Which prose is on screen. `buildReport` always returns "fallback";
+   * `mergeAiReport` flips it when generated text survived validation. Exposed so
+   * the report page can say so honestly rather than passing model output off as
+   * its own.
+   */
+  source: "ai" | "fallback";
 }
 
 export interface DecisionRow {
@@ -536,6 +543,9 @@ export function buildReport(args: {
         : summary.optimalChoices === summary.eventsFaced
           ? "flawless"
           : "luck",
+    // The deterministic report is the product. Anything generated is layered on
+    // top by `mergeAiReport`, never produced here. (CLAUDE.md rule 4.)
+    source: "fallback",
   };
 }
 

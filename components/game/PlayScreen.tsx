@@ -23,6 +23,8 @@ import { EventCardView, QuietMonthCard } from "./EventCard";
 import { MonthResult } from "./MonthResult";
 import { CoachBubble } from "./CoachBubble";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
+import { useCoachLine } from "@/lib/hooks/useAi";
+import { coachFacts } from "@/lib/ai/facts";
 import { CRITICAL, criticalState, lockedSlider } from "@/lib/sim/bandwidth";
 import { CriticalLayer } from "./CriticalLayer";
 import { DevPanel } from "./DevPanel";
@@ -61,6 +63,7 @@ export function PlayScreen({ mode }: { mode: string }) {
   const reducedMotion = usePrefersReducedMotion();
 
   const onboarded = useCompoundStore((s) => s.onboardingComplete);
+  const profile = useCompoundStore((s) => s.profile);
   const run = useCompoundStore((s) => s.run);
   const isResolving = useCompoundStore((s) => s.isResolving);
   const startRun = useCompoundStore((s) => s.startRun);
@@ -105,6 +108,35 @@ export function PlayScreen({ mode }: { mode: string }) {
     return { pack, market, event, openingNetWorth, optimal };
   }, [run, complete]);
 
+  /* ── the coach ──
+     Built above the hydration guard because hooks cannot be called after an
+     early return. The key is seed + month + choice, so advancing a month
+     invalidates any answer still in flight: five fast months must never show
+     month 2's line under month 5's result. (Edge case 15.) */
+  const coach = useMemo(() => {
+    if (!run || !derived || run.phase !== "resolved") return null;
+    const record = run.state.history[run.state.history.length - 1];
+    if (!record) return null;
+    const previousNetWorth =
+      run.state.history[run.state.history.length - 2]?.netWorthEnd ?? derived.openingNetWorth;
+
+    return {
+      key: `${run.seed}:${record.month}:${record.choiceId ?? "-"}`,
+      request: coachFacts({
+        pack: derived.pack,
+        state: run.state,
+        record,
+        previousNetWorth,
+        literacyLevel: profile.literacyLevel,
+      }),
+    };
+  }, [run, derived, profile.literacyLevel]);
+
+  const { text: coachAi, pending: coachPending } = useCoachLine(
+    coach?.key ?? null,
+    coach?.request ?? null,
+  );
+
   if (!hydrated || !run || !derived) return <Skeleton />;
 
   const { pack, event, openingNetWorth, optimal } = derived;
@@ -133,9 +165,14 @@ export function PlayScreen({ mode }: { mode: string }) {
   const resolvedChoice =
     resolvedEvent && lastRec?.choiceId ? choiceById(resolvedEvent, lastRec.choiceId) : null;
 
-  const coachText =
+  /* The authored fallback is what renders. A generated line replaces it when
+     one arrives, and when none does nothing happens and nobody is told — a
+     missing coach line is not an error state. (CLAUDE.md rule 4.) */
+  const coachFallback =
     resolvedChoice?.fallbackNote ??
     "Nothing landed this month. Salary in, bills out — and quiet months are where the compounding actually happens.";
+
+  const coachText = coachAi ?? coachFallback;
 
   /* ── the single advance control, per phase ── */
   const cta = (() => {
@@ -183,6 +220,8 @@ export function PlayScreen({ mode }: { mode: string }) {
       data-reduced-motion={reducedMotion ? "1" : "0"}
       data-critical={critical.any ? "1" : "0"}
       data-locked-slider={lock?.key ?? ""}
+      data-coach-source={coachAi ? "ai" : "fallback"}
+      data-coach-pending={coachPending ? "1" : "0"}
     >
       <header className="flex items-center justify-between gap-3 pb-3">
         <div className="flex items-baseline gap-2">
@@ -262,7 +301,11 @@ export function PlayScreen({ mode }: { mode: string }) {
               choiceLabel={resolvedChoice?.label ?? null}
               reducedMotion={reducedMotion}
             />
-            <CoachBubble text={coachText} />
+            <CoachBubble
+              text={coachText}
+              pending={coachPending}
+              source={coachAi ? "ai" : "fallback"}
+            />
           </>
         )}
       </div>

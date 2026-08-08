@@ -377,13 +377,30 @@ export function TheoryPracticeGap({ text }: { text: string }) {
   );
 }
 
-export function ClosingLine({ text }: { text: string }) {
+export function ClosingLine({
+  text,
+  source = "fallback",
+}: {
+  text: string;
+  source?: "ai" | "fallback";
+}) {
   return (
-    <p
-      data-testid="closing-line"
-      className="border-t border-line pt-5 font-display text-xl leading-snug font-bold text-chalk"
-    >
-      {text}
-    </p>
+    <div className="flex flex-col gap-2 border-t border-line pt-5">
+      <p
+        data-testid="closing-line"
+        className="font-display text-xl leading-snug font-bold text-chalk"
+      >
+        {text}
+      </p>
+      {/* Say which words were generated. Every figure on this page was computed
+          either way, and claiming a model's prose as our own would be the
+          cheapest possible dishonesty. */}
+      {source === "ai" ? (
+        <p data-testid="ai-attribution" className="text-[11px] text-muted-foreground">
+          The wording above was written by the coach. Every rupee figure on this page was computed
+          from your run.
+        </p>
+      ) : null}
+    </div>
   );
 }

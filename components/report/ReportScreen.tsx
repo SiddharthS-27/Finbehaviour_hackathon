@@ -20,6 +20,9 @@ import { packForMode } from "@/content/packs";
 import { TimelineRibbon } from "@/components/game/TimelineRibbon";
 import { NetWorthChart } from "@/components/game/NetWorthChart";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
+import { useAiReport } from "@/lib/hooks/useAi";
+import { reportFacts } from "@/lib/ai/facts";
+import { mergeAiReport } from "@/lib/ai/merge";
 import { WhatIfPanel } from "./WhatIfPanel";
 import {
   ArchetypeCard,
@@ -36,11 +39,15 @@ import {
 /**
  * ★ ONE report screen, all three modes.
  *
- * **Zero AI calls.** Everything on this page is computed from the seed and the
- * twelve decisions: the archetype from deterministic rules, the gap from the
- * shadow agent, the costliest months from replayed counterfactuals. Delete
- * `GEMINI_API_KEY` and nothing here changes — which is the point of Phase 8
- * and the reason it ships before Phase 9. (CLAUDE.md rule 4.)
+ * **Every number here is computed, never generated.** The archetype comes from
+ * deterministic rules, the gap from the shadow agent, the costliest months from
+ * replayed counterfactuals. Delete `GEMINI_API_KEY` and the page is unchanged
+ * apart from its prose — which is what Phase 8 shipped, on purpose, before any
+ * of this existed. (CLAUDE.md rule 4.)
+ *
+ * `/api/report` may rewrite the *words*: archetype copy, the lesson under each
+ * costly decision, the strengths, the learn-next reasons, the closing line.
+ * `mergeAiReport` is the wall — it never reads a figure out of a model reply.
  */
 
 function Skeleton() {
@@ -112,6 +119,29 @@ export function ReportScreen({ mode }: { mode: string }) {
     );
   }, [derived, run, selectedMonth]);
 
+  /* ── the optional half ──
+     `/api/report` is asked to rewrite the *prose* around figures it is handed.
+     Every number stays the deterministic one; the merge below refuses anything
+     that does not line up. If it never answers, this page is exactly what
+     Phase 8 shipped — which is already complete. (CLAUDE.md rule 4.) */
+  const aiRequest = useMemo(
+    () =>
+      derived
+        ? reportFacts({ report: derived.report, literacyLevel: profile.literacyLevel })
+        : null,
+    [derived, profile.literacyLevel],
+  );
+
+  const { report: ai, pending: aiPending } = useAiReport(
+    run && derived ? `${run.packId}:${run.seed}:${run.state.history.length}` : null,
+    aiRequest,
+  );
+
+  const merged = useMemo(
+    () => (derived ? mergeAiReport(derived.report, ai) : null),
+    [derived, ai],
+  );
+
   if (!hydrated) return <Skeleton />;
 
   /* No finished run to report on. Say what happened and what to do next. */
@@ -156,7 +186,10 @@ export function ReportScreen({ mode }: { mode: string }) {
     );
   }
 
-  const { pack, optimal, openingNetWorth, report } = derived;
+  const { pack, optimal, openingNetWorth } = derived;
+  // The merged report is the deterministic one with generated prose swapped in
+  // where it survived validation. Identical to `derived.report` with no key.
+  const report = merged ?? derived.report;
   const state = run.state;
 
   const selectedRecord =
@@ -173,6 +206,8 @@ export function ReportScreen({ mode }: { mode: string }) {
       data-beat-agent={report.beatTheAgent ? "1" : "0"}
       data-whatif-month={selectedMonth ?? ""}
       data-whatif-choice={altChoiceId ?? ""}
+      data-report-source={report.source}
+      data-report-pending={aiPending ? "1" : "0"}
     >
       <header className="flex items-center justify-between gap-3 pb-4">
         <div className="flex items-baseline gap-2">
@@ -255,7 +290,7 @@ export function ReportScreen({ mode }: { mode: string }) {
         <StrengthsAndNext strengths={report.strengths} nextConcepts={report.nextConcepts} />
         <BadgeShelf badges={report.badges} />
 
-        <ClosingLine text={report.closingLine} />
+        <ClosingLine text={report.closingLine} source={report.source} />
 
         <div className="flex flex-wrap gap-2 pt-2">
           <button
