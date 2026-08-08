@@ -1,19 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import type { EventCard as EventCardData, SimState } from "@/lib/sim/types";
+import type { Choice, EventCard as EventCardData, SimState } from "@/lib/sim/types";
 import { choiceAvailability } from "@/lib/sim/deck";
+import { fireDopamine } from "@/lib/confetti";
+import { useBeatSequence, useCountdown } from "@/lib/hooks/usePressure";
+import { PressureCountdown, PressureDim, PressureLayer } from "./PressureLayer";
+import { RollingNumber } from "./RollingNumber";
 
 /**
- * The life event and its choices.
+ * The life event, its pressure, and its choices.
  *
  * `visualWeight` is the manipulation, encoded: the wrong choice is often the
- * prettiest button. That is deliberate and it is the point of the whole mode —
- * an event that neutrally lists options tests knowledge, an event that presses
- * tests behaviour.
- *
- * Pressure beats (headlines, tickers, countdowns) arrive in Phase 5 and render
- * above this. This is the quiet version.
+ * prettiest button. That is deliberate — and it is reversed occasionally
+ * across the deck, so players cannot learn "the big button is always wrong"
+ * instead of learning the actual lesson.
  */
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -26,98 +28,185 @@ const CATEGORY_LABEL: Record<string, string> = {
   digital: "Digital",
 };
 
+/**
+ * What the tempting choice appears to hand you, right now.
+ *
+ * Only positive, immediate money counts — the delayed effects are exactly what
+ * the player is not being shown yet.
+ */
+function dopamineAmount(choice: Choice): number {
+  let total = 0;
+  for (const e of choice.immediate) {
+    if (
+      (e.kind === "cash" || e.kind === "emergencyFund" || e.kind === "portfolioAdd") &&
+      e.amount > 0
+    ) {
+      total += e.amount;
+    }
+  }
+  return total;
+}
+
 export function EventCardView({
   event,
   state,
   selectedChoiceId,
   onSelect,
   disabled,
+  reducedMotion = false,
 }: {
   event: EventCardData;
   state: SimState;
   selectedChoiceId: string | null;
   onSelect: (choiceId: string) => void;
   disabled?: boolean;
+  reducedMotion?: boolean;
 }) {
   const options = choiceAvailability(state, event);
 
+  const arrived = useBeatSequence(event.pressure, event.id, reducedMotion);
+  const timerBeat = event.pressure.find((b) => b.type === "timer") ?? null;
+  const timerArrived = timerBeat !== null && arrived.includes(timerBeat);
+  const seconds =
+    timerBeat && typeof timerBeat.meta?.seconds === "number"
+      ? (timerBeat.meta.seconds as number)
+      : null;
+  const countdown = useCountdown(seconds, timerArrived);
+  const dimActive = arrived.some((b) => b.type === "dim");
+
+  /* The reward fires on *selection*, months before the consequence. */
+  const [burst, setBurst] = useState<number | null>(null);
+  useEffect(() => setBurst(null), [event.id]);
+
+  const handleSelect = (choice: Choice) => {
+    onSelect(choice.id);
+    if (choice.visualWeight === "primary") {
+      void fireDopamine({ reducedMotion });
+      const amount = dopamineAmount(choice);
+      setBurst(amount > 0 ? amount : null);
+    } else {
+      setBurst(null);
+    }
+  };
+
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
-      <header className="flex flex-col gap-2">
-        <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-          {CATEGORY_LABEL[event.category] ?? event.category} · Month {event.month}
-        </span>
-        <h2 className="font-display text-2xl leading-tight font-bold text-chalk">{event.title}</h2>
-        <p className="text-[15px] leading-relaxed text-chalk/90">{event.body}</p>
-      </header>
+    <>
+      <PressureDim active={dimActive} />
 
-      <div className="h-px w-full bg-line" />
+      <section
+        key={event.id}
+        className={cn(
+          "relative z-50 flex flex-col gap-4 rounded-lg border border-line bg-surface p-4",
+          !reducedMotion && "animate-card-deal",
+        )}
+      >
+        <PressureLayer beats={arrived} reducedMotion={reducedMotion} />
 
-      <div className="flex flex-col gap-2">
-        {options.map(({ choice, available, reason }) => {
-          const selected = selectedChoiceId === choice.id;
-          const isDisabled = !available || disabled;
+        <header className="flex flex-col gap-2">
+          <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+            {CATEGORY_LABEL[event.category] ?? event.category} · Month {event.month}
+          </span>
+          <h2 className="font-display text-2xl leading-tight font-bold text-chalk">
+            {event.title}
+          </h2>
+          <p className="text-[15px] leading-relaxed text-chalk/90">{event.body}</p>
+        </header>
 
-          return (
-            <div key={choice.id} className="flex flex-col gap-1">
-              <button
-                type="button"
-                disabled={isDisabled}
-                aria-pressed={selected}
-                onClick={() => onSelect(choice.id)}
-                className={cn(
-                  "flex min-h-[56px] w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-colors",
-                  !available
-                    ? "cursor-not-allowed border-line/60 bg-surface/40"
-                    : selected
-                      ? "border-marigold bg-marigold/20"
-                      : choice.visualWeight === "primary"
-                        ? // The tempting one. Bright, confident, usually wrong.
-                          "border-marigold bg-marigold text-ink hover:bg-marigold/90"
-                        : choice.visualWeight === "muted"
-                          ? "border-line/70 bg-transparent hover:bg-surface2"
-                          : "border-line bg-surface2 hover:border-marigold/60",
-                )}
-              >
-                <span
+        {countdown ? (
+          <PressureCountdown label={timerBeat?.content ?? "Time remaining"} countdown={countdown} />
+        ) : (
+          <div className="h-px w-full bg-line" />
+        )}
+
+        <div className="flex flex-col gap-2">
+          {options.map(({ choice, available, reason }) => {
+            const selected = selectedChoiceId === choice.id;
+            const isDisabled = !available || disabled;
+            const showBurst = selected && burst !== null && choice.visualWeight === "primary";
+
+            return (
+              <div key={choice.id} className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  disabled={isDisabled}
+                  aria-pressed={selected}
+                  onClick={() => handleSelect(choice)}
                   className={cn(
-                    "text-[15px] leading-snug font-medium",
+                    "flex min-h-[56px] w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-colors",
                     !available
-                      ? "text-muted-foreground"
+                      ? "cursor-not-allowed border-line/60 bg-surface/40"
                       : selected
-                        ? "text-chalk"
+                        ? "border-marigold bg-marigold/20"
                         : choice.visualWeight === "primary"
-                          ? "text-ink"
-                          : "text-chalk",
+                          ? // The tempting one. Bright, confident, usually wrong.
+                            "border-marigold bg-marigold text-ink hover:bg-marigold/90"
+                          : choice.visualWeight === "muted"
+                            ? "border-line/70 bg-transparent hover:bg-surface2"
+                            : "border-line bg-surface2 hover:border-marigold/60",
+                    selected && !reducedMotion && "animate-pop",
                   )}
                 >
-                  {choice.label}
-                </span>
-                {choice.hint ? (
                   <span
                     className={cn(
-                      "text-[12px] leading-snug",
+                      "text-[15px] leading-snug font-medium",
                       !available
-                        ? "text-muted-foreground/70"
-                        : choice.visualWeight === "primary" && !selected
-                          ? "text-ink/70"
-                          : "text-muted-foreground",
+                        ? "text-muted-foreground"
+                        : selected
+                          ? "text-chalk"
+                          : choice.visualWeight === "primary"
+                            ? "text-ink"
+                            : "text-chalk",
                     )}
                   >
-                    {choice.hint}
+                    {choice.label}
                   </span>
-                ) : null}
-              </button>
+                  {choice.hint ? (
+                    <span
+                      className={cn(
+                        "text-[12px] leading-snug",
+                        !available
+                          ? "text-muted-foreground/70"
+                          : choice.visualWeight === "primary" && !selected
+                            ? "text-ink/70"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      {choice.hint}
+                    </span>
+                  ) : null}
+                </button>
 
-              {/* Never hide a blocked option — *why you cannot* is the lesson. */}
-              {!available && reason ? (
-                <p className="px-1 text-[12px] leading-snug text-rust">{reason}</p>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </section>
+                {/* ★ Instant dopamine. Marigold, not mint — this is your money
+                    moving, and calling it optimal would be the UI telling the
+                    same lie the event is telling. */}
+                {showBurst ? (
+                  <div
+                    data-dopamine
+                    className={cn(
+                      "flex items-baseline justify-between rounded-sm border border-marigold/50 bg-marigold/10 px-3 py-2",
+                      !reducedMotion && "animate-beat-in",
+                    )}
+                  >
+                    <span className="text-[12px] text-muted-foreground">Into your portfolio</span>
+                    <RollingNumber
+                      value={burst}
+                      signed
+                      reducedMotion={reducedMotion}
+                      className="text-lg text-marigold"
+                    />
+                  </div>
+                ) : null}
+
+                {/* Never hide a blocked option — *why you cannot* is the lesson. */}
+                {!available && reason ? (
+                  <p className="px-1 text-[12px] leading-snug text-rust">{reason}</p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { formatDelta, formatPercentDelta, formatRupees } from "@/lib/format";
+import { RollingNumber } from "./RollingNumber";
 import type { EventCard, MonthRecord } from "@/lib/sim/types";
 
 /**
@@ -48,11 +49,13 @@ export function MonthResult({
   previousNetWorth,
   event,
   choiceLabel,
+  reducedMotion = false,
 }: {
   record: MonthRecord;
   previousNetWorth: number;
   event: EventCard | null;
   choiceLabel: string | null;
+  reducedMotion?: boolean;
 }) {
   const delta = record.netWorthEnd - previousNetWorth;
   const alloc = record.allocation;
@@ -65,15 +68,13 @@ export function MonthResult({
           Month {record.month} closed
         </span>
         <div className="flex items-end justify-between gap-3">
-          <span
-            data-money
-            className={cn(
-              "font-mono text-3xl leading-none",
-              delta < 0 ? "text-rust" : "text-mint",
-            )}
-          >
-            {formatDelta(delta)}
-          </span>
+          {/* Money numbers roll up when they change — motion moment one. */}
+          <RollingNumber
+            value={delta}
+            signed
+            reducedMotion={reducedMotion}
+            className={cn("text-3xl leading-none", delta < 0 ? "text-rust" : "text-mint")}
+          />
           <div className="flex flex-col items-end">
             <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
               Net worth

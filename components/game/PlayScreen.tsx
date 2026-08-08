@@ -21,6 +21,7 @@ import { AllocationPanel } from "./AllocationPanel";
 import { EventCardView, QuietMonthCard } from "./EventCard";
 import { MonthResult } from "./MonthResult";
 import { CoachBubble } from "./CoachBubble";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
 
 /**
  * ★ ONE game screen, all three modes.
@@ -52,6 +53,7 @@ function Skeleton() {
 export function PlayScreen({ mode }: { mode: string }) {
   const router = useRouter();
   const hydrated = useHasHydrated();
+  const reducedMotion = usePrefersReducedMotion();
 
   const onboarded = useCompoundStore((s) => s.onboardingComplete);
   const run = useCompoundStore((s) => s.run);
@@ -164,6 +166,7 @@ export function PlayScreen({ mode }: { mode: string }) {
       data-month={state.month}
       data-unallocated={unallocated}
       data-available={available}
+      data-reduced-motion={reducedMotion ? "1" : "0"}
     >
       <header className="flex items-center justify-between gap-3 pb-3">
         <div className="flex items-baseline gap-2">
@@ -213,6 +216,7 @@ export function PlayScreen({ mode }: { mode: string }) {
               selectedChoiceId={run.choiceId}
               onSelect={setChoice}
               disabled={isResolving}
+              reducedMotion={reducedMotion}
             />
           ) : (
             <QuietMonthCard month={shownMonth} />
@@ -225,6 +229,7 @@ export function PlayScreen({ mode }: { mode: string }) {
               previousNetWorth={prevNetWorth}
               event={resolvedEvent}
               choiceLabel={resolvedChoice?.label ?? null}
+              reducedMotion={reducedMotion}
             />
             <CoachBubble text={coachText} />
           </>
