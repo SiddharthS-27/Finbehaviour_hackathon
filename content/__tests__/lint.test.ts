@@ -3,6 +3,7 @@ import { PACKS } from "../packs";
 import { CONCEPTS, CONCEPTS_BY_ID } from "../concepts";
 import { DIAGNOSTIC, scoreDiagnostic } from "../diagnostic";
 import type { ContentPack, Effect, EventCard } from "@/lib/sim/types";
+import { isCreditChoice } from "@/lib/sim/bandwidth";
 
 /**
  * Content lint — the Phase 2 gate.
@@ -68,6 +69,20 @@ describe("★ gate — every event has at least one choice with no requirements"
     const unconditional = event.choices.filter((c) => !c.requires);
     expect(unconditional.length, "at least one choice must be takeable in any state")
       .toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("★ every event survives a collapsed CIBIL", () => {
+  it.each(ALL_EVENTS.map(([label, , e]) => [label, e]))("%s", (_label, event) => {
+    // Below 600 the deck also blocks credit-taking choices (Phase 6). The
+    // softlock guarantee has to hold against BOTH gates at once, not just
+    // `requires` — otherwise a player with wrecked credit meets a card where
+    // every option is disabled.
+    const alwaysOpen = event.choices.filter((c) => !c.requires && !isCreditChoice(c));
+    expect(
+      alwaysOpen.length,
+      `${event.id} leaves nothing takeable at CIBIL < 600`,
+    ).toBeGreaterThanOrEqual(1);
   });
 });
 

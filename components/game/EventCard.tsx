@@ -54,6 +54,7 @@ export function EventCardView({
   onSelect,
   disabled,
   reducedMotion = false,
+  forcedTimerSeconds = null,
 }: {
   event: EventCardData;
   state: SimState;
@@ -61,17 +62,31 @@ export function EventCardView({
   onSelect: (choiceId: string) => void;
   disabled?: boolean;
   reducedMotion?: boolean;
+  /** ★ Stress above 85 puts a clock on every decision, authored or not. */
+  forcedTimerSeconds?: number | null;
 }) {
   const options = choiceAvailability(state, event);
 
   const arrived = useBeatSequence(event.pressure, event.id, reducedMotion);
   const timerBeat = event.pressure.find((b) => b.type === "timer") ?? null;
   const timerArrived = timerBeat !== null && arrived.includes(timerBeat);
-  const seconds =
+  const authoredSeconds =
     timerBeat && typeof timerBeat.meta?.seconds === "number"
       ? (timerBeat.meta.seconds as number)
       : null;
-  const countdown = useCountdown(seconds, timerArrived);
+
+  // A depleted player gets the shorter of the two clocks. Forcing System 1 is
+  // the point — that is what the stress threshold is modelling.
+  const seconds =
+    forcedTimerSeconds !== null
+      ? Math.min(forcedTimerSeconds, authoredSeconds ?? forcedTimerSeconds)
+      : authoredSeconds;
+  const timerActive = forcedTimerSeconds !== null || timerArrived;
+  const countdown = useCountdown(seconds, timerActive);
+  const timerLabel =
+    forcedTimerSeconds !== null && seconds === forcedTimerSeconds
+      ? "Stress is over 85. Decide."
+      : (timerBeat?.content ?? "Time remaining");
   const dimActive = arrived.some((b) => b.type === "dim");
 
   /* The reward fires on *selection*, months before the consequence. */
@@ -113,7 +128,7 @@ export function EventCardView({
         </header>
 
         {countdown ? (
-          <PressureCountdown label={timerBeat?.content ?? "Time remaining"} countdown={countdown} />
+          <PressureCountdown label={timerLabel} countdown={countdown} />
         ) : (
           <div className="h-px w-full bg-line" />
         )}

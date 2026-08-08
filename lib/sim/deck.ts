@@ -11,6 +11,7 @@
 
 import type { Choice, ContentPack, EventCard, SimState } from "./types";
 import { evaluateCondition, evaluateGate } from "./effects";
+import { creditBlockReason } from "./bandwidth";
 import { rollMarket } from "./rng";
 
 /**
@@ -62,6 +63,12 @@ export interface ChoiceAvailability {
  */
 export function choiceAvailability(state: SimState, event: EventCard): ChoiceAvailability[] {
   return event.choices.map((choice) => {
+    // A CIBIL below 600 closes off credit-taking options. Evaluated here rather
+    // than in the UI so the shadow agent is bound by the same restriction — it
+    // must never be able to take an option the player could not.
+    const creditReason = creditBlockReason(state, choice);
+    if (creditReason) return { choice, available: false, reason: creditReason };
+
     if (!choice.requires) return { choice, available: true };
     const available = evaluateCondition(state, choice.requires);
     return available
@@ -82,6 +89,7 @@ export function takeableChoices(state: SimState, event: EventCard): Choice[] {
 }
 
 export function isChoiceTakeable(state: SimState, choice: Choice): boolean {
+  if (creditBlockReason(state, choice)) return false;
   return !choice.requires || evaluateCondition(state, choice.requires);
 }
 

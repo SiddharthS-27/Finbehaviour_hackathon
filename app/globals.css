@@ -170,6 +170,18 @@
     background: var(--ink);
     /* iOS rubber-band scroll reveals this behind the app shell */
     -webkit-text-size-adjust: 100%;
+
+    /* ★ The near-death transition — the emotional peak of a good run.
+       Applied at the root so the whole app drains together, sticky advance bar
+       included. Because it is a transition rather than a one-way animation,
+       *recovery* re-colours over the same 600ms for free, which is the half
+       that actually matters. Reduced motion neutralises it via the block at the
+       bottom of this file. */
+    transition: filter 600ms ease-out;
+  }
+
+  html[data-critical="1"] {
+    filter: saturate(var(--sat, 1));
   }
 
   body {

@@ -95,6 +95,8 @@ interface CompoundState {
   resolveMonth: () => void;
   nextMonth: () => void;
   abandonRun: () => void;
+  /** Development only — the Phase 6 gate needs to force critical states. */
+  devForce: (patch: Partial<SimState>) => void;
 }
 
 const INITIAL = {
@@ -239,6 +241,16 @@ export const useCompoundStore = create<CompoundState>()(
         ),
 
       abandonRun: () => set({ run: null, isResolving: false }),
+
+      /**
+       * Forces engine state directly. Guarded so it cannot fire in production
+       * even if a caller slips through — the run would stop being reproducible
+       * from its seed, which is the one property everything else rests on.
+       */
+      devForce: (patch) => {
+        if (process.env.NODE_ENV === "production") return;
+        set((s) => (s.run ? { run: { ...s.run, state: { ...s.run.state, ...patch } } } : {}));
+      },
     }),
     {
       name: STORAGE_KEY,

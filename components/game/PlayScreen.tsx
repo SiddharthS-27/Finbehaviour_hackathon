@@ -22,6 +22,9 @@ import { EventCardView, QuietMonthCard } from "./EventCard";
 import { MonthResult } from "./MonthResult";
 import { CoachBubble } from "./CoachBubble";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePressure";
+import { CRITICAL, criticalState, lockedSlider } from "@/lib/sim/bandwidth";
+import { CriticalLayer } from "./CriticalLayer";
+import { DevPanel } from "./DevPanel";
 
 /**
  * ★ ONE game screen, all three modes.
@@ -105,6 +108,11 @@ export function PlayScreen({ mode }: { mode: string }) {
   const lastRec = history[history.length - 1] ?? null;
   const prevNetWorth = history[history.length - 2]?.netWorthEnd ?? openingNetWorth;
 
+  /* ★ Near-death states. Both derived from the engine, never from the UI, so
+     the shadow agent in Phase 7 faces exactly what the player faces. */
+  const critical = criticalState(state);
+  const lock = lockedSlider(state);
+
   const available = availableDiscretionary(state);
   const used =
     run.allocation.discretionarySpend +
@@ -167,6 +175,8 @@ export function PlayScreen({ mode }: { mode: string }) {
       data-unallocated={unallocated}
       data-available={available}
       data-reduced-motion={reducedMotion ? "1" : "0"}
+      data-critical={critical.any ? "1" : "0"}
+      data-locked-slider={lock?.key ?? ""}
     >
       <header className="flex items-center justify-between gap-3 pb-3">
         <div className="flex items-baseline gap-2">
@@ -197,6 +207,9 @@ export function PlayScreen({ mode }: { mode: string }) {
       <div className="flex flex-col gap-4 pt-4 pb-40">
         <StatBars state={state} />
 
+        <CriticalLayer state={state} reducedMotion={reducedMotion} />
+        <DevPanel />
+
         {run.phase === "allocate" && (
           <>
             <h1 className="font-display text-3xl font-bold text-chalk">Month {shownMonth}</h1>
@@ -204,6 +217,8 @@ export function PlayScreen({ mode }: { mode: string }) {
               state={state}
               allocation={run.allocation}
               onChange={setAllocation}
+              lockedKey={lock?.key ?? null}
+              lockedReason={lock?.reason}
             />
           </>
         )}
@@ -217,6 +232,7 @@ export function PlayScreen({ mode }: { mode: string }) {
               onSelect={setChoice}
               disabled={isResolving}
               reducedMotion={reducedMotion}
+              forcedTimerSeconds={critical.stressTimed ? CRITICAL.timedChoiceSeconds : null}
             />
           ) : (
             <QuietMonthCard month={shownMonth} />
