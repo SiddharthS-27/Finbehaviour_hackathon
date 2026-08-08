@@ -12,7 +12,7 @@
  */
 
 import { formatCompactRupees, formatMonths, formatRupees } from "@/lib/format";
-import type { CoachRequest, ReportRequest } from "./schemas";
+import type { CaseQuestionRequest, CoachRequest, ReportRequest } from "./schemas";
 
 const VOICE = `Voice: blunt, warm, second person, present tense, sentence case.
 Indian context throughout — rupees, SIP, EMI, CIBIL. Never dollars, never 401k.
@@ -116,4 +116,52 @@ Concept ids you may recommend: ${req.conceptOptions.map((c) => `${c.id} (${c.nam
 ${tone(req.literacyLevel)}
 
 Return the JSON now.`;
+}
+
+/* ────────────────────── case-study follow-up ─────────────────── */
+
+/**
+ * The one prompt in this file that is allowed dollars.
+ *
+ * `VOICE` pins everything else to an Indian context because everything else is
+ * a person's own salary. A case study is a real event in a real market, and
+ * rewriting the GameStop peak into rupees would be a fabrication dressed as
+ * localisation. The voice rules that matter — blunt, warm, second person, never
+ * shame — still apply.
+ */
+export const CASE_SYSTEM = `You are answering a reader's follow-up question about a documented
+financial case study. You have the case in front of you and you have an authored answer that is
+already on the reader's screen.
+
+Absolute rules:
+- Answer the question that was asked. If the case does not settle it, say so in one sentence and
+  give what the case does establish.
+- Three sentences maximum. No greeting, no sign-off, no bullet points, no headings.
+- ${NUMBERS_RULE}
+- Currency stays as the case states it. Do not convert anything into another currency.
+- Never speculate about what a price will do, and never give investment advice.
+- Voice: blunt, warm, second person, present tense, sentence case. Never shame the reader for
+  asking. Plain words over jargon; name a term only when you immediately say what it means.`;
+
+export function caseUser(req: CaseQuestionRequest): string {
+  const concepts = req.concepts.map((c) => `- ${c.term}: ${c.body}`).join("\n");
+
+  return `CASE: ${req.title}
+Category: ${req.category}
+
+What happened:
+${req.summary}
+
+The mechanics:
+${concepts}
+
+The lesson the case establishes:
+${req.keyLesson}
+
+The answer already on the reader's screen:
+${req.authoredAnswer}
+
+THE READER ASKS: ${req.question}
+
+Write the answer now, in at most three sentences.`;
 }

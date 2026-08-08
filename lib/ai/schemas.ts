@@ -104,3 +104,38 @@ export const reportResponseSchema = z.object({
 });
 
 export type ReportResponse = z.infer<typeof reportResponseSchema>;
+
+/* ────────────────────── case-study follow-up ─────────────────── */
+
+/**
+ * A reader's question about a case study.
+ *
+ * The whole case travels with the question. That is deliberate on two counts:
+ * the model needs the facts in front of it because it is forbidden from
+ * supplying its own (rule 3), and `allowedFrom` builds the permitted-number set
+ * by scanning this payload — so every figure the case states is quotable and
+ * anything else is not.
+ */
+export const caseQuestionRequestSchema = z.object({
+  caseId: z.string().max(64),
+  title: z.string().max(200),
+  category: z.string().max(60),
+  summary: z.string().max(4000),
+  keyLesson: z.string().max(800),
+  concepts: z
+    .array(z.object({ term: z.string().max(80), body: z.string().max(800) }))
+    .max(12),
+  /** The authored answer already on screen. The model improves on it or is discarded. */
+  authoredAnswer: z.string().max(1200),
+  question: z.string().min(1).max(300),
+});
+
+export type CaseQuestionRequest = z.infer<typeof caseQuestionRequestSchema>;
+
+export const caseQuestionResponseSchema = z.object({
+  /** Null means "keep the authored answer" — never an error. */
+  text: z.string().max(900).nullable(),
+  source: z.enum(["ai", "fallback"]),
+});
+
+export type CaseQuestionResponse = z.infer<typeof caseQuestionResponseSchema>;

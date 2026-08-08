@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { coachResponseSchema, reportResponseSchema } from "@/lib/ai/schemas";
-import type { CoachRequest, ReportAi, ReportRequest } from "@/lib/ai/schemas";
+import {
+  caseQuestionResponseSchema,
+  coachResponseSchema,
+  reportResponseSchema,
+} from "@/lib/ai/schemas";
+import type {
+  CaseQuestionRequest,
+  CoachRequest,
+  ReportAi,
+  ReportRequest,
+} from "@/lib/ai/schemas";
 
 /**
  * Fetching the optional half of the app.
@@ -101,4 +110,22 @@ export function useCoachLine(key: string | null, request: CoachRequest | null) {
 export function useAiReport(key: string | null, request: ReportRequest | null) {
   const { data, pending } = useKeyedFetch("/api/report", key, request, parseReport);
   return { report: data, pending };
+}
+
+const parseCaseAnswer = (json: unknown): string | null => {
+  const parsed = caseQuestionResponseSchema.safeParse(json);
+  return parsed.success ? parsed.data.text : null;
+};
+
+/**
+ * A generated answer to a case-study follow-up.
+ *
+ * `key` is the question itself, so asking a second thing abandons the first —
+ * an answer to a question the reader has already moved past is worse than
+ * none. Null while nothing has been asked, which means no request is made at
+ * all until somebody actually asks something.
+ */
+export function useCaseAnswer(key: string | null, request: CaseQuestionRequest | null) {
+  const { data, pending } = useKeyedFetch("/api/case-question", key, request, parseCaseAnswer);
+  return { text: data, pending };
 }

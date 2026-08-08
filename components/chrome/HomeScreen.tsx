@@ -64,6 +64,15 @@ const CARDS: ModeCard[] = [
     href: "/play/bites",
   },
   {
+    id: "case-studies",
+    mode: null,
+    title: "Case studies",
+    blurb:
+      "GameStop, and the pricing menu that talks 84% of people into the expensive tier. Sources attached.",
+    meta: "2 cases · read or play",
+    href: "/case-studies",
+  },
+  {
     id: "explainer",
     mode: null,
     title: "Explainer",
