@@ -48,6 +48,13 @@ function polyline(xs: number[], ys: number[]): string {
   return xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
 }
 
+/** The road not taken — the what-if replay, drawn over the real lines. */
+export interface AlternateSeries {
+  month: number;
+  label: string;
+  netWorthByMonth: Rupees[];
+}
+
 export interface NetWorthChartProps {
   totalMonths: number;
   /** Both lines start from this shared point, so the gap opens visibly. */
@@ -55,6 +62,12 @@ export interface NetWorthChartProps {
   records: MonthRecord[];
   optimal: OptimalRun | null;
   reducedMotion?: boolean;
+  /**
+   * Drawn dashed in chalk, deliberately **not** in one of the four palette
+   * colours: marigold is you, mint is the benchmark, rust is debt. A hypothetical
+   * is not data about your money, so it does not get to borrow a data colour.
+   */
+  alternate?: AlternateSeries | null;
 }
 
 export function NetWorthChart({
@@ -63,6 +76,7 @@ export function NetWorthChart({
   records,
   optimal,
   reducedMotion = false,
+  alternate = null,
 }: NetWorthChartProps) {
   const { ref, width } = useMeasuredWidth();
 
@@ -75,9 +89,11 @@ export function NetWorthChart({
   const theirNow = them.length > 0 ? them[them.length - 1] : null;
   const gap = theirNow === null ? null : theirNow - yourNow;
 
+  const alt = alternate?.netWorthByMonth ?? [];
+
   /* ── scales ──
-     One shared y-domain across both series, or the gap would be a lie. */
-  const values = [...you, ...them];
+     One shared y-domain across every series, or the gap would be a lie. */
+  const values = [...you, ...them, ...alt];
   const lo = Math.min(...values);
   const hi = Math.max(...values);
   const span = hi - lo || Math.max(1000, Math.abs(hi) * 0.1);
@@ -155,6 +171,33 @@ export function NetWorthChart({
               />
             ) : null}
 
+            {/* the road not taken — dashed chalk, never a data colour */}
+            {alt.length > 1 ? (
+              <>
+                <polyline
+                  data-series="alternate"
+                  points={polyline(xs.slice(0, alt.length), alt.map(toY))}
+                  fill="none"
+                  stroke="var(--chalk)"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 3"
+                  opacity={0.75}
+                  strokeLinecap="round"
+                />
+                {/* Where the timeline forked. */}
+                <line
+                  data-series="fork"
+                  x1={xs[alternate!.month - 1]}
+                  x2={xs[alternate!.month - 1]}
+                  y1={0}
+                  y2={HEIGHT}
+                  stroke="var(--chalk)"
+                  strokeWidth={1}
+                  opacity={0.3}
+                />
+              </>
+            ) : null}
+
             {/* marigold — you. Drawn last so it is never hidden under theirs. */}
             {you.length > 1 ? (
               <polyline
@@ -209,6 +252,12 @@ export function NetWorthChart({
             <span className="flex items-center gap-1 text-mint">
               <span className="h-[2px] w-3 rounded-full bg-mint" />
               optimal {formatCompactRupees(theirNow)}
+            </span>
+          ) : null}
+          {alt.length > 1 ? (
+            <span className="flex items-center gap-1 text-chalk/80">
+              <span className="h-[2px] w-3 rounded-full border-t border-dashed border-chalk/80" />
+              if you had {formatCompactRupees(alt[alt.length - 1])}
             </span>
           ) : null}
         </span>
